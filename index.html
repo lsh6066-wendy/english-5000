@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F2F4F1">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>生活英文 500</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one narrow notebook column; sticky header holds mode switch, search and category chips; entries are ruled rows; marked words get a highlighter stroke */
+:root{
+  --bg:#F2F4F1; --paper:#FFFFFF; --ink:#1C2A38; --muted:#5D6B78; --rule:#DCE2E0;
+  --accent:#1F7A6E; --accent-ink:#FFFFFF; --hl:#E9C21F; --hl-soft:rgba(245,213,71,.6);
+  --font-en:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --font-zh:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11161B; --paper:#19212A; --ink:#E5EAEE; --muted:#93A1AD; --rule:#2A353F;
+    --accent:#4CC0AD; --accent-ink:#0B1D1A; --hl:#D9B82E; --hl-soft:rgba(217,184,46,.38);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11161B; --paper:#19212A; --ink:#E5EAEE; --muted:#93A1AD; --rule:#2A353F;
+  --accent:#4CC0AD; --accent-ink:#0B1D1A; --hl:#D9B82E; --hl-soft:rgba(217,184,46,.38);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-zh);font-size:16px;line-height:1.55;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--rule)}
+header .wrap{padding-block:14px 10px;display:flex;flex-direction:column;gap:10px}
+.title-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-family:var(--font-en);font-weight:700;font-size:1.35rem;letter-spacing:-.01em;text-wrap:balance}
+h1 small{font-family:var(--font-zh);font-weight:500;font-size:.8rem;color:var(--muted);margin-left:6px}
+.stats{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.stats b{color:var(--ink);font-weight:700}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px}
+.modes button{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:500;font-size:.95rem;padding:8px 0;border-radius:7px;cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.search-row{display:flex;gap:8px}
+.search-row input{flex:1;min-width:0;font:inherit;font-size:1rem;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:9px 12px}
+.toggle-hard{appearance:none;font:inherit;font-size:.85rem;white-space:nowrap;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:0 12px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.toggle-hard[aria-pressed="true"]{border-color:var(--hl);background:var(--hl-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding-top:12px}
+.chip{appearance:none;flex:none;font:inherit;font-size:.85rem;color:var(--ink);background:transparent;border:1px solid var(--rule);border-radius:999px;padding:5px 12px;cursor:pointer;white-space:nowrap}
+.chip span{color:var(--muted);font-variant-numeric:tabular-nums;margin-left:4px;font-size:.75rem}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip[aria-pressed="true"] span{color:inherit;opacity:.7}
+button:focus-visible,input:focus-visible,select:focus-visible,.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+main .wrap{padding-block:8px 48px}
+.section-label{font-size:.75rem;letter-spacing:.08em;color:var(--muted);font-weight:700;padding:18px 0 4px}
+.entry{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--rule)}
+.entry-main{flex:1;min-width:0}
+.en-line{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.en{font-family:var(--font-en);font-weight:700;font-size:1.2rem;line-height:1.25;padding:0 2px;margin-left:-2px}
+.is-hard .en{background:linear-gradient(transparent 58%,var(--hl-soft) 58%)}
+.pos{font-family:var(--font-en);font-style:italic;font-size:.8rem;color:var(--muted)}
+.zh{font-weight:500;margin-top:2px}
+.ex{font-family:var(--font-en);font-size:.92rem;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
+.actions{display:flex;gap:2px;flex:none}
+.icon-btn{appearance:none;width:40px;height:40px;display:grid;place-items:center;border:0;background:transparent;color:var(--muted);border-radius:8px;cursor:pointer}
+.icon-btn svg{width:22px;height:22px}
+.icon-btn:active{background:var(--rule)}
+.star[aria-pressed="true"]{color:var(--hl)}
+.star[aria-pressed="true"] svg path{fill:var(--hl)}
+.empty{padding:40px 0;text-align:center;color:var(--muted)}
+
+/* review */
+.review{display:flex;flex-direction:column;gap:14px;padding-top:14px}
+.review-top{display:flex;gap:8px;align-items:center}
+.review-top select{flex:1;min-width:0;font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:9px 10px}
+.progress{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{height:4px;background:var(--rule);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+.card{position:relative;background:var(--paper);border:1px solid var(--rule);border-radius:16px;min-height:280px;padding:28px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;cursor:pointer;user-select:none;
+  background-image:repeating-linear-gradient(to bottom,transparent 0 31px,var(--rule) 31px 32px);background-position:0 18px}
+.card .en{font-size:2rem;background:var(--paper);padding:0 6px}
+.card.is-hard .en{background:linear-gradient(transparent 58%,var(--hl-soft) 58%),var(--paper)}
+.card .pos,.card .zh,.card .ex,.card .hint{background:var(--paper);padding:0 6px}
+.card .zh{font-size:1.3rem}
+.card .ex{font-size:1rem;max-width:30ch}
+.card .hint{font-size:.85rem;color:var(--muted)}
+.card .speak-card{position:absolute;top:8px;right:8px;background:var(--paper)}
+.review-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.big-btn{appearance:none;font:inherit;font-weight:700;font-size:1rem;padding:14px 0;border-radius:12px;cursor:pointer;border:1px solid var(--rule);background:var(--paper);color:var(--ink)}
+.big-btn.hard{border-color:var(--hl);background:var(--hl-soft)}
+.big-btn.know{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.link-btn{appearance:none;border:0;background:none;color:var(--accent);font:inherit;font-size:.9rem;cursor:pointer;padding:6px;justify-self:center}
+.done{text-align:center;padding:40px 10px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.done h2{margin:0;font-size:1.3rem}
+.done p{margin:0;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="title-row">
+      <h1>Everyday English<small>生活英文 500</small></h1>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="modes" role="group" aria-label="模式">
+      <button type="button" id="mode-words" data-mode="words" aria-pressed="true">單字</button>
+      <button type="button" id="mode-phrases" data-mode="phrases" aria-pressed="false">片語</button>
+      <button type="button" id="mode-review" data-mode="review" aria-pressed="false">卡片複習</button>
+    </div>
+    <div class="search-row" id="search-row">
+      <input id="q" type="search" placeholder="搜尋英文或中文" autocomplete="off" aria-label="搜尋">
+      <button type="button" class="toggle-hard" id="hard-only" aria-pressed="false">
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>只看不熟
+      </button>
+    </div>
+  </div>
+</header>
+<main><div class="wrap"><div class="chips" id="chips"></div><div id="view"></div></div></main>
+
+<script>
+const WORDS = [
+{key:"food",name:"吃喝",data:`
+ingredient|n.|食材|We need fresh ingredients for this soup.
+recipe|n.|食譜|Can you share the recipe with me?
+flavor|n.|味道；口味|This ice cream comes in five flavors.
+spicy|adj.|辣的|Is this dish too spicy for you?
+bitter|adj.|苦的|The coffee tastes a little bitter.
+sour|adj.|酸的|These lemons are really sour.
+greasy|adj.|油膩的|I don't like greasy food.
+raw|adj.|生的|Don't eat raw chicken.
+leftovers|n.|剩菜|We had leftovers for lunch.
+appetizer|n.|開胃菜|Let's order an appetizer first.
+dessert|n.|甜點|Save some room for dessert.
+beverage|n.|飲料|Beverages are not included.
+portion|n.|一份（的量）|The portions here are huge.
+vegetarian|n./adj.|素食者；素食的|Do you have vegetarian options?
+reservation|n.|訂位|I made a reservation for 7 p.m.
+waiter|n.|服務生|The waiter brought our drinks.
+bill|n.|帳單|Can we get the bill, please?
+tip|n.|小費|Is the tip included?
+takeout|n.|外帶|Let's just get takeout tonight.
+delivery|n.|外送|The delivery took an hour.
+groceries|n.|食品雜貨|I need to buy some groceries.
+snack|n.|點心；零食|I always have a snack at 3 p.m.
+boil|v.|煮沸；水煮|Boil the eggs for ten minutes.
+fry|v.|油炸；煎|She fried some fish for dinner.
+bake|v.|烤（麵包、蛋糕）|My mom bakes cookies every Sunday.
+roast|v.|烘烤（肉）|We roasted a chicken.
+stir|v.|攪拌|Stir the soup slowly.
+chop|v.|切碎|Chop the onions into small pieces.
+peel|v.|削皮|Can you peel the apples?
+pour|v.|倒|Pour the milk into the cup.
+taste|v.|嚐；嚐起來|This tastes amazing.
+starving|adj.|餓扁了|I'm starving. Let's eat.
+full|adj.|吃飽的|No more, thanks. I'm full.
+delicious|adj.|美味的|The cake was delicious.
+fresh|adj.|新鮮的|The fish is very fresh.
+expired|adj.|過期的|This milk has expired.
+diet|n.|飲食；節食|I'm on a diet.
+nutrition|n.|營養|Nutrition is important for kids.
+protein|n.|蛋白質|Eggs are high in protein.
+seafood|n.|海鮮|I'm allergic to seafood.
+noodles|n.|麵|I had beef noodles for lunch.
+sauce|n.|醬汁|Can I have extra sauce?
+cuisine|n.|料理（某國菜）|I love Japanese cuisine.
+buffet|n.|自助餐|The hotel has a breakfast buffet.
+chef|n.|主廚|The chef made it special for us.
+`},
+{key:"shop",name:"購物",data:`
+price|n.|價格|The price is too high.
+discount|n.|折扣|Is there a student discount?
+sale|n.|特價|These shoes are on sale.
+bargain|n.|划算的東西|That jacket was a real bargain.
+affordable|adj.|買得起的；平價的|This phone is quite affordable.
+receipt|n.|收據；發票|Please keep your receipt.
+refund|n./v.|退款|I'd like a refund, please.
+exchange|v.|換貨|Can I exchange this for a smaller size?
+cashier|n.|收銀員|Pay the cashier over there.
+counter|n.|櫃檯|Please pay at the counter.
+cash|n.|現金|Do you take cash?
+credit card|n.|信用卡|Can I pay by credit card?
+change|n.|零錢；找零|Here's your change.
+coin|n.|硬幣|I have no coins for the machine.
+size|n.|尺寸|What size do you wear?
+fitting room|n.|試衣間|The fitting room is on the left.
+brand|n.|品牌|What brand is your bag?
+quality|n.|品質|The quality is really good.
+item|n.|品項；物品|This item is out of stock.
+stock|n.|庫存|We have it in stock.
+customer|n.|顧客|The customer wants to speak to you.
+order|v./n.|訂購；訂單|I ordered it online.
+package|n.|包裹|Your package has arrived.
+ship|v.|寄送；出貨|They will ship it tomorrow.
+deliver|v.|送達|They deliver on weekends too.
+cart|n.|購物車|I put it in my cart.
+checkout|n.|結帳|Go to checkout to pay.
+coupon|n.|折價券|I have a coupon for 20% off.
+membership|n.|會員資格|Membership is free.
+points|n.|點數|You can use your points to pay.
+wallet|n.|錢包|I left my wallet at home.
+budget|n.|預算|What's your budget?
+afford|v.|負擔得起|I can't afford a new car.
+cost|v.|花費（多少錢）|How much does it cost?
+spend|v.|花（錢、時間）|I spent too much this month.
+waste|v.|浪費|Don't waste your money.
+compare|v.|比較|Compare the prices first.
+deal|n.|交易；優惠|That's a good deal.
+mall|n.|購物中心|Let's meet at the mall.
+convenience store|n.|便利商店|There's a convenience store nearby.
+`},
+{key:"move",name:"交通",data:`
+traffic|n.|交通；車流|The traffic is terrible today.
+traffic jam|n.|塞車|I was stuck in a traffic jam.
+rush hour|n.|尖峰時間|Avoid driving during rush hour.
+commute|v./n.|通勤|I commute by MRT.
+passenger|n.|乘客|The bus was full of passengers.
+driver|n.|司機|The driver was very friendly.
+fare|n.|車資|How much is the bus fare?
+platform|n.|月台|The train leaves from platform 3.
+station|n.|車站|Where is the nearest station?
+transfer|v.|轉乘|Transfer to the blue line here.
+route|n.|路線|Which route is faster?
+destination|n.|目的地|We reached our destination.
+schedule|n.|時刻表；行程|Check the train schedule.
+delay|n./v.|延誤|The flight was delayed two hours.
+cancel|v.|取消|The trip was canceled.
+crosswalk|n.|斑馬線|Cross the street at the crosswalk.
+intersection|n.|十字路口|Turn left at the intersection.
+traffic light|n.|紅綠燈|Stop at the traffic light.
+sidewalk|n.|人行道|Walk on the sidewalk.
+corner|n.|轉角|The shop is on the corner.
+block|n.|街區|It's two blocks away.
+parking lot|n.|停車場|The parking lot is full.
+park|v.|停車|You can't park here.
+gas station|n.|加油站|We need to stop at a gas station.
+license|n.|執照|Do you have a driver's license?
+seat belt|n.|安全帶|Fasten your seat belt.
+speed|n.|速度|Slow down. Watch your speed.
+accident|n.|意外；車禍|There was an accident on the highway.
+highway|n.|高速公路|Take the highway. It's faster.
+taxi|n.|計程車|Let's take a taxi.
+scooter|n.|機車|Many people ride scooters in Taiwan.
+helmet|n.|安全帽|Always wear a helmet.
+direction|n.|方向|Am I going in the right direction?
+straight|adv.|直直地|Go straight for two blocks.
+nearby|adj./adv.|附近的|Is there an ATM nearby?
+far|adj.|遠的|Is it far from here?
+distance|n.|距離|It's within walking distance.
+map|n.|地圖|Let me check the map.
+lost|adj.|迷路的|I think we're lost.
+ride|v./n.|搭乘；騎；載一程|Can you give me a ride?
+`},
+{key:"work",name:"工作",data:`
+colleague|n.|同事|My colleagues are very helpful.
+boss|n.|老闆；上司|My boss is on vacation.
+manager|n.|經理|I need to talk to the manager.
+meeting|n.|會議|The meeting starts at ten.
+deadline|n.|截止期限|The deadline is Friday.
+project|n.|專案|We're starting a new project.
+task|n.|任務；工作|I have three tasks to finish today.
+report|n.|報告|Please send me the report.
+salary|n.|薪水|She got a higher salary.
+bonus|n.|獎金|We got a year-end bonus.
+interview|n.|面試|I have a job interview tomorrow.
+resume|n.|履歷|Send your resume by email.
+apply|v.|申請；應徵|I applied for the job.
+hire|v.|雇用|They hired two new people.
+quit|v.|辭職；放棄|He quit his job last month.
+promote|v.|升職|She was promoted to manager.
+overtime|n.|加班|I worked overtime again.
+shift|n.|輪班|I work the night shift.
+office|n.|辦公室|I'll be in the office tomorrow.
+department|n.|部門|Which department do you work in?
+company|n.|公司|I work for a small company.
+client|n.|客戶|We're meeting a client at two.
+contract|n.|合約|Please sign the contract.
+experience|n.|經驗|Do you have any experience?
+skill|n.|技能|Communication is an important skill.
+responsible|adj.|負責的|Who is responsible for this?
+busy|adj.|忙碌的|I'm really busy this week.
+agenda|n.|議程|What's on the agenda today?
+discuss|v.|討論|Let's discuss this later.
+suggest|v.|建議|I suggest we start early.
+decide|v.|決定|We need to decide today.
+solve|v.|解決|We solved the problem together.
+problem|n.|問題|Is there a problem?
+solution|n.|解決辦法|We need a better solution.
+goal|n.|目標|Our goal is to finish by May.
+progress|n.|進度；進步|How's the progress?
+update|n./v.|最新消息；更新|Any updates on the project?
+confirm|v.|確認|Can you confirm the time?
+remind|v.|提醒|Please remind me tomorrow.
+handle|v.|處理|I'll handle it.
+efficient|adj.|有效率的|She's very efficient.
+teamwork|n.|團隊合作|Good teamwork makes it easy.
+day off|n.|休假日|I'm taking a day off on Monday.
+leave|n.|請假|I'm on sick leave today.
+retire|v.|退休|My dad retired last year.
+`},
+{key:"health",name:"身體健康",data:`
+headache|n.|頭痛|I have a terrible headache.
+stomachache|n.|肚子痛|I have a stomachache.
+fever|n.|發燒|She has a high fever.
+cough|n./v.|咳嗽|I can't stop coughing.
+sneeze|v.|打噴嚏|Dust makes me sneeze.
+sore throat|n.|喉嚨痛|I have a sore throat.
+runny nose|n.|流鼻水|I have a runny nose.
+cold|n.|感冒|I caught a cold.
+flu|n.|流感|Get a flu shot this winter.
+allergic|adj.|過敏的|I'm allergic to cats.
+pain|n.|疼痛|Where is the pain?
+hurt|v.|痛；受傷|My back hurts.
+injury|n.|傷|It's a minor injury.
+bleed|v.|流血|Your finger is bleeding.
+dizzy|adj.|頭暈的|I feel dizzy.
+tired|adj.|累的|I'm so tired today.
+exhausted|adj.|精疲力盡的|I'm exhausted after work.
+sleepy|adj.|想睡的|I feel sleepy after lunch.
+rest|n./v.|休息|You need some rest.
+recover|v.|康復|I hope you recover soon.
+medicine|n.|藥|Take this medicine after meals.
+pill|n.|藥丸|Take one pill twice a day.
+pharmacy|n.|藥局|Is there a pharmacy near here?
+clinic|n.|診所|I went to the clinic this morning.
+hospital|n.|醫院|He's still in the hospital.
+appointment|n.|預約（看診）|I have a doctor's appointment.
+symptom|n.|症狀|What are your symptoms?
+check-up|n.|健康檢查|I get a check-up every year.
+nurse|n.|護理師|The nurse took my temperature.
+temperature|n.|體溫；溫度|Let me take your temperature.
+blood pressure|n.|血壓|My blood pressure is normal.
+weight|n.|體重|I want to lose some weight.
+exercise|n./v.|運動|I exercise three times a week.
+gym|n.|健身房|I go to the gym after work.
+stretch|v.|伸展|Stretch before you run.
+healthy|adj.|健康的|Try to eat healthy food.
+sick|adj.|生病的|I feel sick.
+stress|n.|壓力|Work gives me a lot of stress.
+insomnia|n.|失眠|I've had insomnia for weeks.
+vitamin|n.|維他命|I take vitamin C every day.
+emergency|n.|緊急情況|Call 119 in an emergency.
+ambulance|n.|救護車|Someone call an ambulance!
+dentist|n.|牙醫|I'm going to the dentist.
+toothache|n.|牙痛|I have a toothache.
+muscle|n.|肌肉|My muscles are sore.
+`},
+{key:"home",name:"家裡",data:`
+apartment|n.|公寓|I live in a small apartment.
+rent|n./v.|房租；租|The rent is due on the 5th.
+landlord|n.|房東|Call the landlord about the leak.
+neighbor|n.|鄰居|My neighbor is very noisy.
+furniture|n.|家具|We bought new furniture.
+couch|n.|沙發|He fell asleep on the couch.
+shelf|n.|架子|Put the books on the shelf.
+drawer|n.|抽屜|The keys are in the top drawer.
+closet|n.|衣櫃|Hang your coat in the closet.
+mirror|n.|鏡子|Look in the mirror.
+pillow|n.|枕頭|I need a softer pillow.
+blanket|n.|毯子|It's cold. Get a blanket.
+curtain|n.|窗簾|Close the curtains, please.
+fridge|n.|冰箱|Put the milk in the fridge.
+microwave|n.|微波爐|Heat it in the microwave.
+stove|n.|爐子|Turn off the stove.
+sink|n.|水槽|The dishes are in the sink.
+faucet|n.|水龍頭|The faucet is leaking.
+toilet|n.|馬桶；廁所|The toilet is broken.
+laundry|n.|要洗的衣服|I do the laundry on Sundays.
+washing machine|n.|洗衣機|The washing machine is noisy.
+iron|v.|燙（衣服）|I need to iron my shirt.
+fold|v.|摺|Fold the clothes, please.
+sweep|v.|掃地|Sweep the floor after dinner.
+mop|v.|拖地|I mop the floor every week.
+vacuum|v.|吸地|I vacuum the living room.
+dust|n.|灰塵|The shelf is covered in dust.
+trash|n.|垃圾|Take out the trash.
+recycle|v.|回收|We recycle bottles and paper.
+mess|n.|一團亂|Your room is a mess.
+tidy|adj.|整齊的|Keep your desk tidy.
+broken|adj.|壞掉的|The light is broken.
+fix|v.|修理|Can you fix the door?
+plug|n.|插頭|Pull out the plug.
+switch|n.|開關|The switch is by the door.
+light bulb|n.|燈泡|We need a new light bulb.
+electricity|n.|電|The electricity is off.
+utilities|n.|水電瓦斯費|Utilities are included in the rent.
+key|n.|鑰匙|I lost my keys.
+lock|v./n.|鎖|Did you lock the door?
+balcony|n.|陽台|We have a small balcony.
+stairs|n.|樓梯|Take the stairs.
+elevator|n.|電梯|The elevator is out of order.
+roommate|n.|室友|My roommate is a student.
+move|v.|搬家|We're moving next month.
+`},
+{key:"weather",name:"天氣自然",data:`
+weather|n.|天氣|How's the weather today?
+forecast|n.|天氣預報|The forecast says rain.
+sunny|adj.|晴朗的|It's sunny today.
+cloudy|adj.|多雲的|It's cloudy this morning.
+rainy|adj.|下雨的|I hate rainy days.
+windy|adj.|風大的|It's too windy to ride a bike.
+foggy|adj.|有霧的|It's foggy on the mountain.
+humid|adj.|潮濕悶熱的|Taiwan is very humid in summer.
+freezing|adj.|冷到結冰的|It's freezing outside.
+chilly|adj.|涼颼颼的|It's a bit chilly tonight.
+warm|adj.|溫暖的|It's warm and sunny.
+storm|n.|暴風雨|A storm is coming.
+typhoon|n.|颱風|School is closed for the typhoon.
+thunder|n.|雷聲|The thunder woke me up.
+lightning|n.|閃電|Stay inside during lightning.
+shower|n.|陣雨|There may be showers later.
+umbrella|n.|雨傘|Don't forget your umbrella.
+raincoat|n.|雨衣|Wear a raincoat on your scooter.
+wet|adj.|濕的|My shoes are wet.
+dry|adj.|乾的|The air is very dry.
+earthquake|n.|地震|Did you feel the earthquake?
+season|n.|季節|Which season do you like best?
+spring|n.|春天|Flowers bloom in spring.
+autumn|n.|秋天|Autumn is my favorite season.
+degree|n.|度|It's 30 degrees today.
+sunscreen|n.|防曬乳|Put on some sunscreen.
+air conditioner|n.|冷氣|Turn on the air conditioner.
+heater|n.|暖氣機|We need a heater in winter.
+air pollution|n.|空氣污染|The air pollution is bad today.
+mountain|n.|山|Let's go hiking in the mountains.
+beach|n.|海灘|We spent the day at the beach.
+river|n.|河|We walked along the river.
+sunrise|n.|日出|We got up early to see the sunrise.
+sunset|n.|日落|The sunset was beautiful.
+nature|n.|大自然|I love being in nature.
+`},
+{key:"feel",name:"心情個性",data:`
+excited|adj.|興奮的|I'm so excited about the trip.
+nervous|adj.|緊張的|I'm nervous about the test.
+worried|adj.|擔心的|Don't be worried. It's fine.
+upset|adj.|難過；不高興的|She was upset about the news.
+angry|adj.|生氣的|Why are you so angry?
+annoyed|adj.|被惹煩的|I'm annoyed by the noise.
+bored|adj.|無聊的|I'm bored. Let's go out.
+lonely|adj.|寂寞的|I feel lonely sometimes.
+embarrassed|adj.|尷尬的|I was so embarrassed.
+surprised|adj.|驚訝的|I was surprised to see him.
+confused|adj.|困惑的|I'm confused. Can you explain?
+disappointed|adj.|失望的|I'm disappointed with the result.
+relaxed|adj.|放鬆的|I feel relaxed on vacation.
+proud|adj.|驕傲的；自豪的|I'm proud of you.
+grateful|adj.|感激的|I'm grateful for your help.
+jealous|adj.|嫉妒的|He's jealous of his brother.
+scared|adj.|害怕的|I'm scared of the dark.
+afraid|adj.|害怕；恐怕|I'm afraid I can't come.
+satisfied|adj.|滿意的|Are you satisfied with it?
+comfortable|adj.|舒服的|This chair is comfortable.
+mood|n.|心情|She's in a good mood today.
+feeling|n.|感覺|I have a feeling he'll be late.
+emotion|n.|情緒|It's OK to show your emotions.
+cry|v.|哭|The movie made me cry.
+laugh|v.|笑|He always makes me laugh.
+smile|v./n.|微笑|She has a nice smile.
+sigh|v.|嘆氣|He sighed and sat down.
+calm|adj.|冷靜的|Stay calm.
+patient|adj.|有耐心的|Please be patient.
+kind|adj.|善良的|She's very kind to everyone.
+friendly|adj.|友善的|The people here are friendly.
+polite|adj.|有禮貌的|He's always polite.
+rude|adj.|沒禮貌的|That was very rude.
+honest|adj.|誠實的|To be honest, I don't like it.
+shy|adj.|害羞的|She's shy around new people.
+lazy|adj.|懶惰的|I feel lazy on Sundays.
+funny|adj.|好笑的|That joke is so funny.
+serious|adj.|認真的；嚴重的|Are you serious?
+careful|adj.|小心的|Be careful on the stairs.
+confident|adj.|有自信的|She looks confident.
+selfish|adj.|自私的|Don't be so selfish.
+generous|adj.|大方的|He's generous with his time.
+stubborn|adj.|固執的|My dad is very stubborn.
+curious|adj.|好奇的|Kids are curious about everything.
+mean|adj.|刻薄的|Don't be mean to your sister.
+`},
+{key:"time",name:"時間日常",data:`
+usually|adv.|通常|I usually get up at seven.
+often|adv.|常常|I often eat out.
+sometimes|adv.|有時候|Sometimes I walk to work.
+rarely|adv.|很少|I rarely watch TV.
+recently|adv.|最近|I've been busy recently.
+lately|adv.|近來|Have you seen him lately?
+soon|adv.|很快；不久|I'll be there soon.
+already|adv.|已經|I've already eaten.
+yet|adv.|還（沒）|I haven't finished yet.
+still|adv.|仍然|Are you still at work?
+early|adj./adv.|早的|I got there early.
+late|adj./adv.|晚的；遲到|Sorry I'm late.
+on time|adv.|準時|The train is on time.
+weekday|n.|平日|I'm busy on weekdays.
+weekend|n.|週末|What are you doing this weekend?
+tonight|adv.|今晚|Let's eat out tonight.
+midnight|n.|半夜十二點|I went to bed after midnight.
+noon|n.|中午|Let's meet at noon.
+moment|n.|片刻；時刻|Wait a moment, please.
+while|n.|一段時間|I haven't seen you in a while.
+period|n.|期間|It's a busy period at work.
+routine|n.|例行公事|Exercise is part of my routine.
+habit|n.|習慣|Reading is a good habit.
+alarm|n.|鬧鐘|I didn't hear my alarm.
+oversleep|v.|睡過頭|I overslept this morning.
+nap|n.|小睡|I took a short nap.
+brush|v.|刷|Brush your teeth before bed.
+bath|n.|泡澡|I take a hot bath at night.
+dress|v.|穿衣|Get dressed. We're late.
+hurry|v.|趕快|Hurry! The bus is coming.
+wait|v.|等|Wait for me!
+spare time|n.|空閒時間|What do you do in your spare time?
+free|adj.|有空的；免費的|Are you free tomorrow?
+available|adj.|有空的；可用的|Is this seat available?
+date|n.|日期；約會|What's the date today?
+calendar|n.|日曆；行事曆|Let me check my calendar.
+holiday|n.|假日|Tomorrow is a holiday.
+anniversary|n.|週年紀念日|It's our wedding anniversary.
+plan|n./v.|計畫|Do you have any plans tonight?
+chore|n.|家事；雜事|I hate doing chores.
+`},
+{key:"travel",name:"旅行",data:`
+trip|n.|旅行|How was your trip?
+travel|v.|旅行|I love to travel.
+vacation|n.|假期|We're going on vacation next week.
+passport|n.|護照|Don't forget your passport.
+visa|n.|簽證|Do I need a visa?
+airport|n.|機場|I'll pick you up at the airport.
+flight|n.|班機|My flight leaves at 8 a.m.
+boarding pass|n.|登機證|Here's your boarding pass.
+gate|n.|登機門|The flight boards at gate 12.
+luggage|n.|行李|My luggage is too heavy.
+suitcase|n.|行李箱|I need a bigger suitcase.
+carry-on|n.|隨身行李|I only have a carry-on.
+check in|v.|報到；入住|We can check in at 3 p.m.
+check out|v.|退房|We have to check out by 11 a.m.
+hotel|n.|飯店|Our hotel is near the station.
+book|v.|預訂|I booked two rooms.
+single room|n.|單人房|I'd like a single room.
+lobby|n.|大廳|Let's meet in the lobby.
+souvenir|n.|紀念品|I bought some souvenirs.
+sightseeing|n.|觀光|We went sightseeing all day.
+tourist|n.|觀光客|The city is full of tourists.
+guide|n.|導遊；指南|Our guide was very funny.
+ticket|n.|票|I'll buy the tickets online.
+abroad|adv.|在國外|Have you ever lived abroad?
+foreign|adj.|外國的|I want to learn a foreign language.
+local|adj.|當地的|Let's try the local food.
+culture|n.|文化|I'm interested in Japanese culture.
+currency|n.|貨幣|What's the local currency?
+exchange rate|n.|匯率|The exchange rate is good now.
+customs|n.|海關|We went through customs quickly.
+jet lag|n.|時差（不適）|I still have jet lag.
+view|n.|景色|The view is amazing.
+famous|adj.|有名的|This temple is very famous.
+crowded|adj.|擁擠的|The night market is crowded.
+explore|v.|探索|Let's explore the old town.
+arrive|v.|抵達|What time do we arrive?
+depart|v.|出發；離開|The bus departs at 9.
+pack|v.|打包|Have you packed yet?
+backpack|n.|背包|I travel with just a backpack.
+itinerary|n.|行程表|Here's our itinerary for the week.
+`},
+{key:"talk",name:"溝通網路",data:`
+message|n.|訊息|I'll send you a message.
+text|v.|傳簡訊|Text me when you get home.
+call|v.|打電話|I'll call you later.
+reply|n./v.|回覆|Sorry for the late reply.
+voice message|n.|語音訊息|I left you a voice message.
+contact|v./n.|聯絡|How can I contact you?
+phone number|n.|電話號碼|What's your phone number?
+email|n.|電子郵件|I'll send it by email.
+attach|v.|附加|I attached the file.
+download|v.|下載|Download the app first.
+upload|v.|上傳|I uploaded the photos.
+password|n.|密碼|I forgot my password.
+account|n.|帳號|Do you have an account?
+log in|v.|登入|I can't log in.
+app|n.|應用程式|Which app do you use?
+website|n.|網站|Check our website for details.
+search|v.|搜尋|Search for it online.
+post|v.|貼文|She posted a photo online.
+share|v.|分享|Can you share the link?
+link|n.|連結|Send me the link.
+screenshot|n.|截圖|Take a screenshot.
+charge|v.|充電|My phone needs to charge.
+battery|n.|電池|My battery is dead.
+signal|n.|訊號|There's no signal here.
+Wi-Fi|n.|無線網路|What's the Wi-Fi password?
+online|adj./adv.|線上|I bought it online.
+offline|adj.|離線|The app works offline.
+video call|n.|視訊通話|Let's have a video call.
+notification|n.|通知|Turn off notifications.
+delete|v.|刪除|I deleted the message by mistake.
+save|v.|儲存|Don't forget to save the file.
+explain|v.|解釋|Can you explain that again?
+mention|v.|提到|He mentioned you yesterday.
+repeat|v.|重複|Could you repeat that?
+pronounce|v.|發音|How do you pronounce this word?
+meaning|n.|意思|What's the meaning of this word?
+understand|v.|了解|I don't understand.
+translate|v.|翻譯|Can you translate this for me?
+complain|v.|抱怨|He always complains about work.
+argue|v.|爭吵；爭論|They argue about money.
+`},
+{key:"people",name:"社交",data:`
+invite|v.|邀請|I invited her to dinner.
+invitation|n.|邀請（函）|Thanks for the invitation.
+party|n.|派對|Are you coming to the party?
+guest|n.|客人|We have guests tonight.
+host|n.|主人|She's a great host.
+introduce|v.|介紹|Let me introduce my friend.
+stranger|n.|陌生人|Don't talk to strangers.
+relationship|n.|關係|They have a good relationship.
+partner|n.|伴侶；夥伴|Is your partner coming?
+couple|n.|情侶；一對|They're a cute couple.
+marry|v.|結婚|They got married last year.
+divorce|n.|離婚|Their divorce was hard.
+relative|n.|親戚|We visit our relatives at New Year.
+cousin|n.|表／堂兄弟姊妹|My cousin lives in Tainan.
+nephew|n.|姪子；外甥|My nephew is five.
+niece|n.|姪女；外甥女|My niece loves drawing.
+parents|n.|父母|I live with my parents.
+gift|n.|禮物|Thanks for the gift!
+congratulations|int.|恭喜|Congratulations on your new job!
+celebrate|v.|慶祝|Let's celebrate tonight!
+wedding|n.|婚禮|I'm going to a wedding.
+apologize|v.|道歉|I apologize for being late.
+forgive|v.|原諒|Please forgive me.
+thank|v.|感謝|Thank you for everything.
+appreciate|v.|感激|I really appreciate it.
+promise|v./n.|承諾|I promise I'll be there.
+trust|v.|信任|I trust you.
+advice|n.|建議|Can I ask your advice?
+favor|n.|幫忙|Can you do me a favor?
+borrow|v.|借（入）|Can I borrow your pen?
+lend|v.|借（出）|Can you lend me 100 dollars?
+gossip|n.|八卦|I don't like gossip.
+chat|v.|聊天|We chatted for hours.
+visit|v.|拜訪|Come visit us sometime.
+agree|v.|同意|I agree with you.
+disagree|v.|不同意|I disagree.
+opinion|n.|意見|What's your opinion?
+respect|v./n.|尊重|We should respect each other.
+manners|n.|禮貌；規矩|She has good manners.
+nickname|n.|綽號|What's your nickname?
+`}
+];
+
+const PHRASES = [
+{key:"p-daily",name:"生活動作",data:`
+wake up|醒來|I woke up at six today.
+get up|起床|I get up at seven.
+pick up|接（人）；撿起|Can you pick me up at the station?
+drop off|讓（人）下車；送去|Drop me off at the corner.
+turn on|打開（電器）|Turn on the lights.
+turn off|關掉|Turn off your phone, please.
+turn down|調小聲；拒絕|Can you turn down the music?
+put on|穿上；戴上|Put on your jacket.
+take off|脫下；起飛|Take off your shoes here.
+try on|試穿|Can I try this on?
+look for|尋找|I'm looking for my keys.
+look after|照顧|Can you look after my cat?
+look forward to|期待|I'm looking forward to the trip.
+find out|查出；發現|I'll find out what happened.
+run out of|用完|We've run out of milk.
+clean up|打掃乾淨|Let's clean up the kitchen.
+throw away|丟掉|Don't throw it away.
+take out|拿出去；外帶|Can you take out the trash?
+get on|上（車）|Get on the bus here.
+get off|下（車）|Get off at the next stop.
+hang out|出去玩；閒晃|Let's hang out this weekend.
+eat out|外食|We eat out on Fridays.
+grab a bite|隨便吃點東西|Let's grab a bite before the movie.
+go shopping|去購物|I went shopping with my sister.
+stay up late|熬夜|Don't stay up too late.
+sleep in|睡晚一點|I slept in on Sunday.
+fill out|填寫（表格）|Please fill out this form.
+sign up|報名；註冊|I signed up for a yoga class.
+set up|設定；安排|Can you help me set up my phone?
+figure out|想出；弄懂|I can't figure out this app.
+`},
+{key:"p-work",name:"做事工作",data:`
+work on|正在做（某事）|I'm working on a report.
+deal with|處理|I'll deal with it tomorrow.
+take care of|照顧；處理|I'll take care of it.
+catch up on|補上（進度）|I need to catch up on my work.
+call back|回電|I'll call you back later.
+hand in|繳交|Hand in your report by Friday.
+put off|延後|Don't put it off any longer.
+come up with|想出（點子）|She came up with a great idea.
+follow up|後續追蹤|I'll follow up with the client.
+get back to|回覆（某人）|I'll get back to you soon.
+be in charge of|負責|Who's in charge of this project?
+take a break|休息一下|Let's take a break.
+on the way|在路上|I'm on the way.
+in a hurry|趕時間|Sorry, I'm in a hurry.
+ahead of time|提前|Please arrive ahead of time.
+get used to|習慣|I'm getting used to my new job.
+give up|放棄|Don't give up!
+keep going|繼續下去|You're doing great. Keep going.
+make sure|確認|Make sure the door is locked.
+make a decision|做決定|We need to make a decision today.
+`},
+{key:"p-social",name:"人際社交",data:`
+get along with|和…相處融洽|I get along with my coworkers.
+run into|巧遇|I ran into my teacher today.
+keep in touch|保持聯絡|Let's keep in touch.
+show up|出現；現身|He didn't show up.
+break up|分手|They broke up last month.
+make friends|交朋友|It's easy to make friends here.
+cheer up|振作；讓人開心|Cheer up! It's not so bad.
+calm down|冷靜下來|Calm down and tell me.
+count on|依靠；指望|You can count on me.
+have fun|玩得開心|Have fun at the party!
+on purpose|故意地|I didn't do it on purpose.
+by the way|順帶一提|By the way, I saw Tom yesterday.
+make fun of|取笑|Don't make fun of him.
+look up to|尊敬|I look up to my dad.
+take turns|輪流|Let's take turns driving.
+split the bill|平分帳單|Let's split the bill.
+my treat|我請客|Dinner is my treat.
+in person|親自；當面|I'd like to meet you in person.
+pay attention to|注意|Pay attention to the road.
+change my mind|改變主意|I changed my mind.
+`},
+{key:"p-say",name:"口語短句",data:`
+No worries.|沒關係；別擔心|No worries. It happens.
+It's up to you.|你決定就好|Pizza or noodles? It's up to you.
+That makes sense.|有道理|Oh, that makes sense.
+I'm not sure.|我不確定|I'm not sure about that.
+Never mind.|算了；沒事|Never mind. It's not important.
+Take your time.|慢慢來|No rush. Take your time.
+Sounds good.|聽起來不錯；好啊|Dinner at seven? Sounds good.
+I'm on it.|我馬上處理|Don't worry, I'm on it.
+What's up?|最近怎樣？|Hey, what's up?
+Long time no see.|好久不見|Long time no see! How are you?
+I can't help it.|我忍不住|I can't help it. It's so funny.
+It's not a big deal.|沒什麼大不了|Relax. It's not a big deal.
+Good for you!|替你高興！|You passed? Good for you!
+I'll pass.|我就不了|Karaoke? I'll pass, thanks.
+Hang on.|等一下|Hang on. I'll be right back.
+Just kidding.|開玩笑的|Just kidding! I'm not angry.
+Me neither.|我也不|"I don't like it." "Me neither."
+It depends.|看情況|Will I go? It depends.
+Not bad.|還不錯|"How was it?" "Not bad."
+You're welcome.|不客氣|"Thanks!" "You're welcome."
+Excuse me.|不好意思（借過、請問）|Excuse me, where's the station?
+Go ahead.|請便；你先|Go ahead. I'll wait.
+Let me see.|讓我想想|Let me see… maybe Tuesday?
+I mean it.|我是認真的|Thank you. I mean it.
+That's too bad.|真可惜|You're sick? That's too bad.
+Lucky you!|你真幸運！|You got tickets? Lucky you!
+Same here.|我也是|"I'm tired." "Same here."
+Help yourself.|請自便（吃東西）|Help yourself to some cake.
+Watch out!|小心！|Watch out! A car!
+Fair enough.|說得也是；好吧|Fair enough. Let's do it your way.
+`}
+];
+
+// ---------- parse ----------
+const words = [], phrases = [];
+WORDS.forEach(g => g.data.trim().split("\n").forEach(line => {
+  const [en,pos,zh,ex] = line.split("|");
+  words.push({id:"w:"+en, en, pos, zh, ex, cat:g.key});
+}));
+PHRASES.forEach(g => g.data.trim().split("\n").forEach(line => {
+  const [en,zh,ex] = line.split("|");
+  phrases.push({id:"p:"+en, en, pos:"", zh, ex, cat:g.key});
+}));
+const ALL = words.concat(phrases);
+const byId = new Map(ALL.map(x => [x.id, x]));
+
+// ---------- storage ----------
+const STORE_KEY = "everyday-english-500:hard";
+let hard = new Set();
+try { const raw = localStorage.getItem(STORE_KEY); if (raw) hard = new Set(JSON.parse(raw)); } catch(e) {}
+function saveHard(){ try { localStorage.setItem(STORE_KEY, JSON.stringify([...hard])); } catch(e) {} }
+function setHard(id, on){ on ? hard.add(id) : hard.delete(id); saveHard(); renderStats(); }
+
+// ---------- speech ----------
+const canSpeak = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
+function speak(text){
+  if (!canSpeak) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US"; u.rate = 0.9;
+    speechSynthesis.speak(u);
+  } catch(e) {}
+}
+
+// ---------- helpers ----------
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ICON_SPEAK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+const ICON_STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+function shuffle(a){ for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+// ---------- state ----------
+const state = { mode:"words", cat:"all", q:"", hardOnly:false };
+const review = { src:null, deck:[], i:0, flipped:false };
+
+const $view = document.getElementById("view");
+const $chips = document.getElementById("chips");
+const $q = document.getElementById("q");
+const $hardOnly = document.getElementById("hard-only");
+const $searchRow = document.getElementById("search-row");
+
+function renderStats(){
+  document.getElementById("stats").innerHTML =
+    `<b>${words.length}</b> 單字 · <b>${phrases.length}</b> 片語 · 不熟 <b>${hard.size}</b>`;
+}
+
+function groupsFor(mode){ return mode === "phrases" ? PHRASES : WORDS; }
+function itemsFor(mode){ return mode === "phrases" ? phrases : words; }
+
+function renderChips(){
+  if (state.mode === "review"){ $chips.hidden = true; return; }
+  $chips.hidden = false;
+  const items = itemsFor(state.mode);
+  const groups = groupsFor(state.mode);
+  let html = `<button type="button" class="chip" data-cat="all" aria-pressed="${state.cat==="all"}">全部<span>${items.length}</span></button>`;
+  groups.forEach(g => {
+    const n = items.filter(x => x.cat === g.key).length;
+    html += `<button type="button" class="chip" data-cat="${g.key}" aria-pressed="${state.cat===g.key}">${esc(g.name)}<span>${n}</span></button>`;
+  });
+  $chips.innerHTML = html;
+}
+
+function entryHTML(x){
+  const isHard = hard.has(x.id);
+  return `<article class="entry${isHard?" is-hard":""}" data-id="${esc(x.id)}">
+    <div class="entry-main">
+      <div class="en-line"><span class="en">${esc(x.en)}</span>${x.pos?`<span class="pos">${esc(x.pos)}</span>`:""}</div>
+      <div class="zh">${esc(x.zh)}</div>
+      <div class="ex">${esc(x.ex)}</div>
+    </div>
+    <div class="actions">
+      ${canSpeak?`<button type="button" class="icon-btn speak" aria-label="念出 ${esc(x.en)}">${ICON_SPEAK}</button>`:""}
+      <button type="button" class="icon-btn star" aria-pressed="${isHard}" aria-label="標記不熟">${ICON_STAR}</button>
+    </div>
+  </article>`;
+}
+
+function renderList(){
+  const items = itemsFor(state.mode);
+  const groups = groupsFor(state.mode);
+  const q = state.q.trim().toLowerCase();
+  const match = x => (state.cat==="all" || x.cat===state.cat)
+    && (!state.hardOnly || hard.has(x.id))
+    && (!q || x.en.toLowerCase().includes(q) || x.zh.includes(q) || x.ex.toLowerCase().includes(q));
+  let html = "", total = 0;
+  groups.forEach(g => {
+    if (state.cat !== "all" && state.cat !== g.key) return;
+    const list = items.filter(x => x.cat === g.key && match(x));
+    if (!list.length) return;
+    total += list.length;
+    html += `<div class="section-label">${esc(g.name)} · ${list.length}</div>` + list.map(entryHTML).join("");
+  });
+  if (!total){
+    html = state.hardOnly && !q
+      ? `<div class="empty">這裡還沒有標記不熟的字。<br>點每個字右邊的星星，就會加進來。</div>`
+      : `<div class="empty">找不到「${esc(state.q)}」。<br>換個字試試看。</div>`;
+  }
+  $view.innerHTML = html;
+}
+
+// ---------- review ----------
+function reviewSources(){
+  const opts = [{v:"hard", t:`只複習不熟（${hard.size}）`}, {v:"words", t:`全部單字（${words.length}）`}];
+  WORDS.forEach(g => opts.push({v:g.key, t:`單字・${g.name}`}));
+  opts.push({v:"phrases", t:`全部片語（${phrases.length}）`});
+  PHRASES.forEach(g => opts.push({v:g.key, t:`片語・${g.name}`}));
+  return opts;
+}
+function poolFor(src){
+  if (src === "hard") return ALL.filter(x => hard.has(x.id));
+  if (src === "words") return words.slice();
+  if (src === "phrases") return phrases.slice();
+  return ALL.filter(x => x.cat === src);
+}
+function startDeck(src){
+  review.src = src;
+  review.deck = shuffle(poolFor(src).map(x => x.id));
+  review.i = 0; review.flipped = false;
+  renderReview();
+}
+function renderReview(){
+  if (!review.src) { review.src = hard.size ? "hard" : "words"; review.deck = shuffle(poolFor(review.src).map(x=>x.id)); review.i = 0; }
+  const opts = reviewSources().map(o => `<option value="${o.v}"${o.v===review.src?" selected":""}>${esc(o.t)}</option>`).join("");
+  const n = review.deck.length, i = review.i;
+  let body;
+  if (!n){
+    body = `<div class="done"><h2>還沒有不熟的字</h2><p>在「單字」或「片語」頁，點星星標記不熟的字，<br>它們就會出現在這裡。</p></div>`;
+  } else if (i >= n){
+    const left = review.deck.filter(id => hard.has(id)).length;
+    body = `<div class="done"><h2>這一輪做完了</h2><p>共 ${n} 張，其中 ${left} 張還標著不熟。</p>
+      <button type="button" class="big-btn know" id="again" style="padding:12px 28px">再來一輪</button></div>`;
+  } else {
+    const x = byId.get(review.deck[i]);
+    const isHard = hard.has(x.id);
+    body = `<div class="card${isHard?" is-hard":""}" id="card" tabindex="0" role="button" aria-label="翻面">
+        ${canSpeak?`<button type="button" class="icon-btn speak-card" id="card-speak" aria-label="念出來">${ICON_SPEAK}</button>`:""}
+        <div class="en">${esc(x.en)}</div>
+        ${x.pos?`<div class="pos">${esc(x.pos)}</div>`:""}
+        ${review.flipped
+          ? `<div class="zh">${esc(x.zh)}</div><div class="ex">${esc(x.ex)}</div>`
+          : `<div class="hint">點一下看中文</div>`}
+      </div>
+      <div class="review-btns">
+        <button type="button" class="big-btn hard" id="btn-hard">還不熟</button>
+        <button type="button" class="big-btn know" id="btn-know">記住了</button>
+      </div>
+      <button type="button" class="link-btn" id="reshuffle">重新洗牌</button>`;
+  }
+  $view.innerHTML = `<div class="review">
+    <div class="review-top"><select id="review-src" aria-label="複習範圍">${opts}</select>
+    <span class="progress">${n ? Math.min(i+1,n) : 0} / ${n}</span></div>
+    <div class="bar"><i style="width:${n?Math.min(i,n)/n*100:0}%"></i></div>
+    ${body}</div>`;
+}
+function nextCard(markHard){
+  const id = review.deck[review.i];
+  setHard(id, markHard);
+  review.i++; review.flipped = false;
+  renderReview();
+}
+
+// ---------- render ----------
+function render(){
+  document.querySelectorAll(".modes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === state.mode));
+  $searchRow.hidden = state.mode === "review";
+  $hardOnly.setAttribute("aria-pressed", state.hardOnly);
+  renderChips();
+  renderStats();
+  if (state.mode === "review") renderReview(); else renderList();
+}
+
+// ---------- events ----------
+document.querySelector(".modes").addEventListener("click", e => {
+  const b = e.target.closest("button[data-mode]"); if (!b) return;
+  if (state.mode !== b.dataset.mode){ state.mode = b.dataset.mode; state.cat = "all"; }
+  render(); window.scrollTo(0,0);
+});
+$chips.addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  state.cat = b.dataset.cat; renderChips(); renderList(); window.scrollTo(0,0);
+});
+$q.addEventListener("input", () => { state.q = $q.value; renderList(); });
+$hardOnly.addEventListener("click", () => { state.hardOnly = !state.hardOnly; $hardOnly.setAttribute("aria-pressed", state.hardOnly); renderList(); });
+
+$view.addEventListener("click", e => {
+  // list
+  const entry = e.target.closest(".entry");
+  if (entry){
+    const x = byId.get(entry.dataset.id);
+    if (e.target.closest(".speak")) { speak(x.en); return; }
+    const star = e.target.closest(".star");
+    if (star){
+      const on = !hard.has(x.id);
+      setHard(x.id, on);
+      star.setAttribute("aria-pressed", on);
+      entry.classList.toggle("is-hard", on);
+      return;
+    }
+    return;
+  }
+  // review
+  if (e.target.closest("#card-speak")) { const x = byId.get(review.deck[review.i]); speak(x.en); return; }
+  if (e.target.closest("#card")) { review.flipped = !review.flipped; renderReview(); return; }
+  if (e.target.closest("#btn-hard")) { nextCard(true); return; }
+  if (e.target.closest("#btn-know")) { nextCard(false); return; }
+  if (e.target.closest("#reshuffle") || e.target.closest("#again")) { startDeck(review.src); return; }
+});
+$view.addEventListener("change", e => { if (e.target.id === "review-src") startDeck(e.target.value); });
+$view.addEventListener("keydown", e => {
+  if (e.target.id === "card" && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); review.flipped = !review.flipped; renderReview(); document.getElementById("card")?.focus(); }
+});
+
+render();
+</script>
+</body>
+</html>
