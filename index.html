@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F2F4F1">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>生活英文 500</title>
+<title>生活英文 5000</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
@@ -40,14 +40,18 @@ h1{margin:0;font-family:var(--font-en);font-weight:700;font-size:1.35rem;letter-
 h1 small{font-family:var(--font-zh);font-weight:500;font-size:.8rem;color:var(--muted);margin-left:6px}
 .stats{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .stats b{color:var(--ink);font-weight:700}
-.modes{display:grid;grid-template-columns:repeat(3,1fr);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px}
+.modes{display:grid;grid-template-columns:repeat(4,1fr);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px}
 .modes button{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:500;font-size:.95rem;padding:8px 0;border-radius:7px;cursor:pointer}
 .modes button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .search-row{display:flex;gap:8px}
 .search-row input{flex:1;min-width:0;font:inherit;font-size:1rem;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:9px 12px}
 .toggle-hard{appearance:none;font:inherit;font-size:.85rem;white-space:nowrap;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:0 12px;cursor:pointer;display:flex;align-items:center;gap:6px}
 .toggle-hard[aria-pressed="true"]{border-color:var(--hl);background:var(--hl-soft)}
-.chips{display:flex;flex-wrap:wrap;gap:8px;padding-top:12px}
+.chips{display:flex;flex-direction:column;gap:8px;padding-top:12px}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.chip.lv{border-radius:8px}
+.chip:disabled{opacity:.45;cursor:default}
+.lv-tag{font-size:.7rem;font-weight:700;color:var(--accent);border:1px solid currentColor;border-radius:4px;padding:0 5px;line-height:1.5}
 .chip{appearance:none;flex:none;font:inherit;font-size:.85rem;color:var(--ink);background:transparent;border:1px solid var(--rule);border-radius:999px;padding:5px 12px;cursor:pointer;white-space:nowrap}
 .chip span{color:var(--muted);font-variant-numeric:tabular-nums;margin-left:4px;font-size:.75rem}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -96,6 +100,12 @@ main .wrap{padding-block:8px 48px}
 .done{text-align:center;padding:40px 10px;display:flex;flex-direction:column;gap:12px;align-items:center}
 .done h2{margin:0;font-size:1.3rem}
 .done p{margin:0;color:var(--muted)}
+.done-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.done .big-btn{padding:12px 22px}
+.today-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.today-head h2{margin:0;font-size:1.2rem}
+.today-head span{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.card .tag{position:absolute;top:14px;left:14px;font-size:.78rem;color:var(--muted);background:var(--paper);padding:0 6px}
 @media (prefers-reduced-motion: reduce){.bar i{transition:none}}
 </style>
 </head>
@@ -103,13 +113,14 @@ main .wrap{padding-block:8px 48px}
 <header>
   <div class="wrap">
     <div class="title-row">
-      <h1>Everyday English<small>生活英文 500</small></h1>
+      <h1>Everyday English<small>生活英文 5000</small></h1>
       <div class="stats" id="stats"></div>
     </div>
     <div class="modes" role="group" aria-label="模式">
-      <button type="button" id="mode-words" data-mode="words" aria-pressed="true">單字</button>
+      <button type="button" id="mode-today" data-mode="today" aria-pressed="true">今天學</button>
+      <button type="button" id="mode-words" data-mode="words" aria-pressed="false">單字</button>
       <button type="button" id="mode-phrases" data-mode="phrases" aria-pressed="false">片語</button>
-      <button type="button" id="mode-review" data-mode="review" aria-pressed="false">卡片複習</button>
+      <button type="button" id="mode-review" data-mode="review" aria-pressed="false">複習</button>
     </div>
     <div class="search-row" id="search-row">
       <input id="q" type="search" placeholder="搜尋英文或中文" autocomplete="off" aria-label="搜尋">
@@ -761,24 +772,46 @@ Fair enough.|說得也是；好吧|Fair enough. Let's do it your way.
 ];
 
 // ---------- parse ----------
+// 新增單字：在 WORDS 加一組 {key:"food", name:"吃喝", level:2, data:`...`}，key 相同就會併到同一分類
+const LEVELS = [1,2,3,4,5];
+const LEVEL_NAMES = {1:"生活必備",2:"日常常用",3:"生活進階",4:"中級常見",5:"中級進階"};
+const CAT_NAMES = {}, CAT_ORDER = [], PCAT_NAMES = {}, PCAT_ORDER = [];
 const words = [], phrases = [];
-WORDS.forEach(g => g.data.trim().split("\n").forEach(line => {
-  const [en,pos,zh,ex] = line.split("|");
-  words.push({id:"w:"+en, en, pos, zh, ex, cat:g.key});
-}));
-PHRASES.forEach(g => g.data.trim().split("\n").forEach(line => {
-  const [en,zh,ex] = line.split("|");
-  phrases.push({id:"p:"+en, en, pos:"", zh, ex, cat:g.key});
-}));
+WORDS.forEach(g => {
+  if (!CAT_NAMES[g.key]) { CAT_NAMES[g.key] = g.name; CAT_ORDER.push(g.key); }
+  const level = g.level || 1;
+  g.data.trim().split("\n").forEach(line => {
+    const [en,pos,zh,ex] = line.split("|");
+    words.push({id:"w:"+en, en, pos, zh, ex, cat:g.key, level});
+  });
+});
+PHRASES.forEach(g => {
+  if (!PCAT_NAMES[g.key]) { PCAT_NAMES[g.key] = g.name; PCAT_ORDER.push(g.key); }
+  g.data.trim().split("\n").forEach(line => {
+    const [en,zh,ex] = line.split("|");
+    phrases.push({id:"p:"+en, en, pos:"", zh, ex, cat:g.key, level:g.level || 1});
+  });
+});
 const ALL = words.concat(phrases);
 const byId = new Map(ALL.map(x => [x.id, x]));
+const LEVEL_COUNT = {}; LEVELS.forEach(l => LEVEL_COUNT[l] = words.filter(x => x.level === l).length);
+const MULTI_LEVEL = LEVELS.filter(l => LEVEL_COUNT[l] > 0).length > 1;
+// 今天學的順序：先第 1 級，同一級照檔案順序
+const LEARN_ORDER = words.slice().sort((a,b) => a.level - b.level);
 
 // ---------- storage ----------
-const STORE_KEY = "everyday-english-500:hard";
-let hard = new Set();
-try { const raw = localStorage.getItem(STORE_KEY); if (raw) hard = new Set(JSON.parse(raw)); } catch(e) {}
-function saveHard(){ try { localStorage.setItem(STORE_KEY, JSON.stringify([...hard])); } catch(e) {} }
-function setHard(id, on){ on ? hard.add(id) : hard.delete(id); saveHard(); renderStats(); }
+const KEY_HARD = "everyday-english-500:hard";
+const KEY_LEARNED = "everyday-english:learned";
+const KEY_TODAY = "everyday-english:today";
+const KEY_DAILY = "everyday-english:daily";
+function load(k, fallback){ try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fallback; } catch(e) { return fallback; } }
+function store(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+let hard = new Set(load(KEY_HARD, []));
+let learned = new Set(load(KEY_LEARNED, []));
+let daily = load(KEY_DAILY, 20); if (![10,20,30].includes(daily)) daily = 20;
+let plan = load(KEY_TODAY, null);
+function setHard(id, on){ on ? hard.add(id) : hard.delete(id); store(KEY_HARD, [...hard]); renderStats(); }
+function setLearned(id){ learned.add(id); store(KEY_LEARNED, [...learned]); }
 
 // ---------- speech ----------
 const canSpeak = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
@@ -797,10 +830,13 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">"
 const ICON_SPEAK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
 const ICON_STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
 function shuffle(a){ for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function todayStr(){ const d = new Date(), p = n => String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+function catName(x){ return x.id.startsWith("p:") ? PCAT_NAMES[x.cat] : CAT_NAMES[x.cat]; }
 
 // ---------- state ----------
-const state = { mode:"words", cat:"all", q:"", hardOnly:false };
+const state = { mode:"today", level:"all", cat:"all", q:"", hardOnly:false };
 const review = { src:null, deck:[], i:0, flipped:false };
+let todayFlipped = false;
 
 const $view = document.getElementById("view");
 const $chips = document.getElementById("chips");
@@ -808,32 +844,48 @@ const $q = document.getElementById("q");
 const $hardOnly = document.getElementById("hard-only");
 const $searchRow = document.getElementById("search-row");
 
+function learnedCount(){ let n = 0; for (const x of words) if (learned.has(x.id)) n++; return n; }
 function renderStats(){
   document.getElementById("stats").innerHTML =
-    `<b>${words.length}</b> 單字 · <b>${phrases.length}</b> 片語 · 不熟 <b>${hard.size}</b>`;
+    `單字 <b>${words.length}</b> · 已學 <b>${learnedCount()}</b> · 不熟 <b>${hard.size}</b>`;
 }
 
-function groupsFor(mode){ return mode === "phrases" ? PHRASES : WORDS; }
-function itemsFor(mode){ return mode === "phrases" ? phrases : words; }
-
+// ---------- list ----------
 function renderChips(){
-  if (state.mode === "review"){ $chips.hidden = true; return; }
+  if (state.mode !== "words" && state.mode !== "phrases"){ $chips.hidden = true; return; }
   $chips.hidden = false;
-  const items = itemsFor(state.mode);
-  const groups = groupsFor(state.mode);
-  let html = `<button type="button" class="chip" data-cat="all" aria-pressed="${state.cat==="all"}">全部<span>${items.length}</span></button>`;
-  groups.forEach(g => {
-    const n = items.filter(x => x.cat === g.key).length;
-    html += `<button type="button" class="chip" data-cat="${g.key}" aria-pressed="${state.cat===g.key}">${esc(g.name)}<span>${n}</span></button>`;
-  });
+  let html = "";
+  if (state.mode === "words"){
+    html += `<div class="chip-row" aria-label="等級"><button type="button" class="chip lv" data-level="all" aria-pressed="${state.level==="all"}">全部等級<span>${words.length}</span></button>`;
+    LEVELS.forEach(l => {
+      const n = LEVEL_COUNT[l];
+      html += `<button type="button" class="chip lv" data-level="${l}" aria-pressed="${state.level===l}"${n?"":" disabled"}>第${l}級<span>${n || "準備中"}</span></button>`;
+    });
+    html += `</div>`;
+    const inLevel = words.filter(x => state.level === "all" || x.level === state.level);
+    html += `<div class="chip-row" aria-label="分類"><button type="button" class="chip" data-cat="all" aria-pressed="${state.cat==="all"}">全部<span>${inLevel.length}</span></button>`;
+    CAT_ORDER.forEach(k => {
+      const n = inLevel.filter(x => x.cat === k).length;
+      if (n) html += `<button type="button" class="chip" data-cat="${k}" aria-pressed="${state.cat===k}">${esc(CAT_NAMES[k])}<span>${n}</span></button>`;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div class="chip-row" aria-label="分類"><button type="button" class="chip" data-cat="all" aria-pressed="${state.cat==="all"}">全部<span>${phrases.length}</span></button>`;
+    PCAT_ORDER.forEach(k => {
+      const n = phrases.filter(x => x.cat === k).length;
+      html += `<button type="button" class="chip" data-cat="${k}" aria-pressed="${state.cat===k}">${esc(PCAT_NAMES[k])}<span>${n}</span></button>`;
+    });
+    html += `</div>`;
+  }
   $chips.innerHTML = html;
 }
 
 function entryHTML(x){
   const isHard = hard.has(x.id);
+  const lv = MULTI_LEVEL && x.id.startsWith("w:") ? `<span class="lv-tag">第${x.level}級</span>` : "";
   return `<article class="entry${isHard?" is-hard":""}" data-id="${esc(x.id)}">
     <div class="entry-main">
-      <div class="en-line"><span class="en">${esc(x.en)}</span>${x.pos?`<span class="pos">${esc(x.pos)}</span>`:""}</div>
+      <div class="en-line"><span class="en">${esc(x.en)}</span>${x.pos?`<span class="pos">${esc(x.pos)}</span>`:""}${lv}</div>
       <div class="zh">${esc(x.zh)}</div>
       <div class="ex">${esc(x.ex)}</div>
     </div>
@@ -845,19 +897,22 @@ function entryHTML(x){
 }
 
 function renderList(){
-  const items = itemsFor(state.mode);
-  const groups = groupsFor(state.mode);
+  const isWords = state.mode === "words";
+  const items = isWords ? words : phrases;
+  const order = isWords ? CAT_ORDER : PCAT_ORDER;
+  const names = isWords ? CAT_NAMES : PCAT_NAMES;
   const q = state.q.trim().toLowerCase();
-  const match = x => (state.cat==="all" || x.cat===state.cat)
+  const match = x => (!isWords || state.level === "all" || x.level === state.level)
+    && (state.cat === "all" || x.cat === state.cat)
     && (!state.hardOnly || hard.has(x.id))
     && (!q || x.en.toLowerCase().includes(q) || x.zh.includes(q) || x.ex.toLowerCase().includes(q));
   let html = "", total = 0;
-  groups.forEach(g => {
-    if (state.cat !== "all" && state.cat !== g.key) return;
-    const list = items.filter(x => x.cat === g.key && match(x));
+  order.forEach(k => {
+    if (state.cat !== "all" && state.cat !== k) return;
+    const list = items.filter(x => x.cat === k && match(x));
     if (!list.length) return;
     total += list.length;
-    html += `<div class="section-label">${esc(g.name)} · ${list.length}</div>` + list.map(entryHTML).join("");
+    html += `<div class="section-label">${esc(names[k])} · ${list.length}</div>` + list.map(entryHTML).join("");
   });
   if (!total){
     html = state.hardOnly && !q
@@ -867,19 +922,106 @@ function renderList(){
   $view.innerHTML = html;
 }
 
+// ---------- card ----------
+function cardHTML(x, flipped){
+  const isHard = hard.has(x.id);
+  const tag = x.id.startsWith("w:") ? `第${x.level}級・${catName(x)}` : `片語・${catName(x)}`;
+  return `<div class="card${isHard?" is-hard":""}" id="card" tabindex="0" role="button" aria-label="翻面">
+      <span class="tag">${esc(tag)}</span>
+      ${canSpeak?`<button type="button" class="icon-btn speak-card" id="card-speak" aria-label="念出來">${ICON_SPEAK}</button>`:""}
+      <div class="en">${esc(x.en)}</div>
+      ${x.pos?`<div class="pos">${esc(x.pos)}</div>`:""}
+      ${flipped
+        ? `<div class="zh">${esc(x.zh)}</div><div class="ex">${esc(x.ex)}</div>`
+        : `<div class="hint">點一下看中文</div>`}
+    </div>
+    <div class="review-btns">
+      <button type="button" class="big-btn hard" id="btn-hard">還不熟</button>
+      <button type="button" class="big-btn know" id="btn-know">記住了</button>
+    </div>`;
+}
+
+// ---------- today ----------
+function pickNew(n, exclude){
+  const out = [];
+  for (const x of LEARN_ORDER){
+    if (out.length >= n) break;
+    if (!learned.has(x.id) && !exclude.has(x.id)) out.push(x.id);
+  }
+  return out;
+}
+function savePlan(){ store(KEY_TODAY, plan); }
+function ensurePlan(){
+  const t = todayStr();
+  if (!plan || plan.date !== t || !Array.isArray(plan.ids)){
+    plan = { date:t, ids:pickNew(daily, new Set()), i:0 };
+    todayFlipped = false;
+    savePlan();
+  }
+  plan.ids = plan.ids.filter(id => byId.has(id));
+  if (!(plan.i >= 0)) plan.i = 0;
+  if (plan.i > plan.ids.length) plan.i = plan.ids.length;
+}
+function renderToday(){
+  ensurePlan();
+  const n = plan.ids.length, i = plan.i;
+  const d = new Date();
+  const opts = [10,20,30].map(v => `<option value="${v}"${v===daily?" selected":""}>每天 ${v} 個新字</option>`).join("");
+  let body;
+  if (!n){
+    body = `<div class="done"><h2>全部的字都學過了</h2><p>目前的 ${words.length} 個字你都看過一遍了。<br>可以去「複習」再練不熟的字，或等新的字加進來。</p>
+      ${hard.size?`<div class="done-btns"><button type="button" class="big-btn know" id="go-review">複習不熟的字</button></div>`:""}</div>`;
+  } else if (i >= n){
+    const hardToday = plan.ids.filter(id => hard.has(id)).length;
+    const more = pickNew(daily, new Set(plan.ids)).length;
+    body = `<div class="done"><h2>今天的 ${n} 個學完了</h2>
+      <p>${hardToday ? `其中 ${hardToday} 個標了不熟，可以再複習一次。` : "全部都記住了，很厲害！"}<br>明天打開會有新的字。</p>
+      <div class="done-btns">
+        ${hardToday?`<button type="button" class="big-btn know" id="go-review">複習不熟的字</button>`:""}
+        ${more?`<button type="button" class="big-btn" id="more">再學 ${more} 個</button>`:""}
+      </div></div>`;
+  } else {
+    body = cardHTML(byId.get(plan.ids[i]), todayFlipped);
+  }
+  $view.innerHTML = `<div class="review">
+    <div class="today-head"><h2>今天學</h2><span>${d.getMonth()+1}月${d.getDate()}日・全部已學 ${learnedCount()} / ${words.length}</span></div>
+    <div class="review-top"><select id="daily-count" aria-label="每天新字數量">${opts}</select>
+    <span class="progress">${n ? Math.min(i+1,n) : 0} / ${n}</span></div>
+    <div class="bar"><i style="width:${n?Math.min(i,n)/n*100:0}%"></i></div>
+    ${body}</div>`;
+}
+function nextToday(markHard){
+  const id = plan.ids[plan.i];
+  setLearned(id);
+  setHard(id, markHard);
+  plan.i++; todayFlipped = false; savePlan();
+  renderToday();
+}
+function changeDaily(v){
+  daily = v; store(KEY_DAILY, daily);
+  const seen = plan.ids.slice(0, plan.i);
+  plan.ids = seen.concat(pickNew(Math.max(daily - seen.length, 0), new Set(seen)));
+  savePlan(); renderToday();
+}
+
 // ---------- review ----------
 function reviewSources(){
-  const opts = [{v:"hard", t:`只複習不熟（${hard.size}）`}, {v:"words", t:`全部單字（${words.length}）`}];
-  WORDS.forEach(g => opts.push({v:g.key, t:`單字・${g.name}`}));
+  const opts = [{v:"hard", t:`只複習不熟（${hard.size}）`}, {v:"learned", t:`今天學過的字`}, {v:"words", t:`全部單字（${words.length}）`}];
+  if (MULTI_LEVEL) LEVELS.forEach(l => { if (LEVEL_COUNT[l]) opts.push({v:"lv"+l, t:`第${l}級・${LEVEL_NAMES[l]}（${LEVEL_COUNT[l]}）`}); });
+  CAT_ORDER.forEach(k => opts.push({v:"c:"+k, t:`單字・${CAT_NAMES[k]}`}));
   opts.push({v:"phrases", t:`全部片語（${phrases.length}）`});
-  PHRASES.forEach(g => opts.push({v:g.key, t:`片語・${g.name}`}));
+  PCAT_ORDER.forEach(k => opts.push({v:"pc:"+k, t:`片語・${PCAT_NAMES[k]}`}));
   return opts;
 }
 function poolFor(src){
   if (src === "hard") return ALL.filter(x => hard.has(x.id));
+  if (src === "learned") { ensurePlan(); return plan.ids.slice(0, plan.i).map(id => byId.get(id)); }
   if (src === "words") return words.slice();
   if (src === "phrases") return phrases.slice();
-  return ALL.filter(x => x.cat === src);
+  if (src.startsWith("lv")) return words.filter(x => x.level === +src.slice(2));
+  if (src.startsWith("c:")) return words.filter(x => x.cat === src.slice(2));
+  if (src.startsWith("pc:")) return phrases.filter(x => x.cat === src.slice(3));
+  return [];
 }
 function startDeck(src){
   review.src = src;
@@ -893,27 +1035,16 @@ function renderReview(){
   const n = review.deck.length, i = review.i;
   let body;
   if (!n){
-    body = `<div class="done"><h2>還沒有不熟的字</h2><p>在「單字」或「片語」頁，點星星標記不熟的字，<br>它們就會出現在這裡。</p></div>`;
+    body = review.src === "learned"
+      ? `<div class="done"><h2>今天還沒學新字</h2><p>先到「今天學」學幾個字，<br>再回來這裡複習。</p></div>`
+      : `<div class="done"><h2>還沒有不熟的字</h2><p>在「單字」或「片語」頁，點星星標記不熟的字，<br>它們就會出現在這裡。</p></div>`;
   } else if (i >= n){
     const left = review.deck.filter(id => hard.has(id)).length;
     body = `<div class="done"><h2>這一輪做完了</h2><p>共 ${n} 張，其中 ${left} 張還標著不熟。</p>
-      <button type="button" class="big-btn know" id="again" style="padding:12px 28px">再來一輪</button></div>`;
+      <div class="done-btns"><button type="button" class="big-btn know" id="again">再來一輪</button></div></div>`;
   } else {
-    const x = byId.get(review.deck[i]);
-    const isHard = hard.has(x.id);
-    body = `<div class="card${isHard?" is-hard":""}" id="card" tabindex="0" role="button" aria-label="翻面">
-        ${canSpeak?`<button type="button" class="icon-btn speak-card" id="card-speak" aria-label="念出來">${ICON_SPEAK}</button>`:""}
-        <div class="en">${esc(x.en)}</div>
-        ${x.pos?`<div class="pos">${esc(x.pos)}</div>`:""}
-        ${review.flipped
-          ? `<div class="zh">${esc(x.zh)}</div><div class="ex">${esc(x.ex)}</div>`
-          : `<div class="hint">點一下看中文</div>`}
-      </div>
-      <div class="review-btns">
-        <button type="button" class="big-btn hard" id="btn-hard">還不熟</button>
-        <button type="button" class="big-btn know" id="btn-know">記住了</button>
-      </div>
-      <button type="button" class="link-btn" id="reshuffle">重新洗牌</button>`;
+    body = cardHTML(byId.get(review.deck[i]), review.flipped) +
+      `<button type="button" class="link-btn" id="reshuffle">重新洗牌</button>`;
   }
   $view.innerHTML = `<div class="review">
     <div class="review-top"><select id="review-src" aria-label="複習範圍">${opts}</select>
@@ -927,15 +1058,22 @@ function nextCard(markHard){
   review.i++; review.flipped = false;
   renderReview();
 }
+function goReviewHard(){
+  state.mode = "review";
+  review.src = "hard"; review.deck = shuffle(poolFor("hard").map(x => x.id)); review.i = 0; review.flipped = false;
+  render(); window.scrollTo(0,0);
+}
 
 // ---------- render ----------
 function render(){
   document.querySelectorAll(".modes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === state.mode));
-  $searchRow.hidden = state.mode === "review";
+  $searchRow.hidden = !(state.mode === "words" || state.mode === "phrases");
   $hardOnly.setAttribute("aria-pressed", state.hardOnly);
   renderChips();
   renderStats();
-  if (state.mode === "review") renderReview(); else renderList();
+  if (state.mode === "today") renderToday();
+  else if (state.mode === "review") renderReview();
+  else renderList();
 }
 
 // ---------- events ----------
@@ -945,14 +1083,21 @@ document.querySelector(".modes").addEventListener("click", e => {
   render(); window.scrollTo(0,0);
 });
 $chips.addEventListener("click", e => {
-  const b = e.target.closest(".chip"); if (!b) return;
-  state.cat = b.dataset.cat; renderChips(); renderList(); window.scrollTo(0,0);
+  const b = e.target.closest(".chip"); if (!b || b.disabled) return;
+  if (b.dataset.level){ state.level = b.dataset.level === "all" ? "all" : +b.dataset.level; state.cat = "all"; }
+  if (b.dataset.cat){ state.cat = b.dataset.cat; }
+  renderChips(); renderList(); window.scrollTo(0,0);
 });
 $q.addEventListener("input", () => { state.q = $q.value; renderList(); });
 $hardOnly.addEventListener("click", () => { state.hardOnly = !state.hardOnly; $hardOnly.setAttribute("aria-pressed", state.hardOnly); renderList(); });
 
+function flipCard(){
+  if (state.mode === "today") { todayFlipped = !todayFlipped; renderToday(); }
+  else { review.flipped = !review.flipped; renderReview(); }
+}
+function currentCardId(){ return state.mode === "today" ? plan.ids[plan.i] : review.deck[review.i]; }
+
 $view.addEventListener("click", e => {
-  // list
   const entry = e.target.closest(".entry");
   if (entry){
     const x = byId.get(entry.dataset.id);
@@ -963,20 +1108,30 @@ $view.addEventListener("click", e => {
       setHard(x.id, on);
       star.setAttribute("aria-pressed", on);
       entry.classList.toggle("is-hard", on);
-      return;
     }
     return;
   }
-  // review
-  if (e.target.closest("#card-speak")) { const x = byId.get(review.deck[review.i]); speak(x.en); return; }
-  if (e.target.closest("#card")) { review.flipped = !review.flipped; renderReview(); return; }
-  if (e.target.closest("#btn-hard")) { nextCard(true); return; }
-  if (e.target.closest("#btn-know")) { nextCard(false); return; }
+  if (e.target.closest("#card-speak")) { speak(byId.get(currentCardId()).en); return; }
+  if (e.target.closest("#card")) { flipCard(); return; }
+  const markHard = e.target.closest("#btn-hard"), markKnow = e.target.closest("#btn-know");
+  if (markHard || markKnow){
+    if (state.mode === "today") nextToday(!!markHard); else nextCard(!!markHard);
+    return;
+  }
+  if (e.target.closest("#more")) { plan.ids = plan.ids.concat(pickNew(daily, new Set(plan.ids))); savePlan(); renderToday(); return; }
+  if (e.target.closest("#go-review")) { goReviewHard(); return; }
   if (e.target.closest("#reshuffle") || e.target.closest("#again")) { startDeck(review.src); return; }
 });
-$view.addEventListener("change", e => { if (e.target.id === "review-src") startDeck(e.target.value); });
+$view.addEventListener("change", e => {
+  if (e.target.id === "review-src") startDeck(e.target.value);
+  if (e.target.id === "daily-count") changeDaily(+e.target.value);
+});
 $view.addEventListener("keydown", e => {
-  if (e.target.id === "card" && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); review.flipped = !review.flipped; renderReview(); document.getElementById("card")?.focus(); }
+  if (e.target.id === "card" && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); flipCard(); document.getElementById("card")?.focus(); }
+});
+// 過了半夜回到頁面時，換成新的一天
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && state.mode === "today" && plan && plan.date !== todayStr()) renderToday();
 });
 
 render();
