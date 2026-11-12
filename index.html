@@ -40,7 +40,7 @@ h1{margin:0;font-family:var(--font-en);font-weight:700;font-size:1.35rem;letter-
 h1 small{font-family:var(--font-zh);font-weight:500;font-size:.8rem;color:var(--muted);margin-left:6px}
 .stats{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .stats b{color:var(--ink);font-weight:700}
-.modes{display:grid;grid-template-columns:repeat(4,1fr);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px}
+.modes{display:grid;grid-template-columns:repeat(5,1fr);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px}
 .modes button{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:500;font-size:.95rem;padding:8px 0;border-radius:7px;cursor:pointer}
 .modes button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .search-row{display:flex;gap:8px}
@@ -108,6 +108,32 @@ main .wrap{padding-block:8px 48px}
 .today-head h2{margin:0;font-size:1.2rem}
 .today-head span{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .card .tag{position:absolute;top:14px;left:14px;font-size:.78rem;color:var(--muted);background:var(--paper);padding:0 6px}
+/* lookup + sync */
+.title-right{display:flex;align-items:center;gap:10px}
+.sync-btn{appearance:none;font:inherit;font-size:.78rem;color:var(--muted);background:var(--paper);border:1px solid var(--rule);border-radius:999px;padding:3px 10px 3px 8px;display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
+.sync-btn svg{width:16px;height:16px}
+.sync-btn[data-state="ok"]{color:var(--accent);border-color:var(--accent)}
+.sync-btn[data-state="err"]{color:#C0392B;border-color:#C0392B}
+.go-btn{appearance:none;font:inherit;font-weight:700;font-size:.95rem;color:var(--accent-ink);background:var(--accent);border:0;border-radius:10px;padding:0 16px;cursor:pointer;white-space:nowrap}
+.lookup-box{margin-top:14px;padding:4px 14px;border:1px solid var(--accent);border-radius:12px;background:var(--paper)}
+.lookup-box .note{font-size:.8rem;color:var(--accent);padding:8px 0 0}
+.lookup-box .entry:last-child{border-bottom:0}
+.lookup-msg{margin-top:14px;padding:14px;border:1px dashed var(--rule);border-radius:12px;color:var(--muted);text-align:center}
+.dict-btn{appearance:none;font:inherit;font-size:.95rem;color:var(--accent);background:var(--paper);border:1px solid var(--accent);border-radius:10px;padding:10px 14px;margin-top:14px;cursor:pointer;width:100%}
+.def{font-family:var(--font-en);font-size:.9rem;margin-top:2px}
+.ipa{font-family:"Segoe UI","Roboto","Helvetica Neue","Noto Sans",Arial,sans-serif;font-size:.9rem;color:var(--accent)}
+.card .ipa{font-size:1.1rem;background:var(--paper);padding:0 6px}
+.card .def{background:var(--paper);padding:0 6px;max-width:32ch}
+dialog{border:1px solid var(--rule);border-radius:16px;background:var(--paper);color:var(--ink);padding:20px;width:min(92vw,440px);max-height:85vh;overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h2{margin:0 0 8px;font-size:1.15rem}
+dialog p,dialog ol{margin:0 0 10px;font-size:.92rem;color:var(--muted)}
+dialog ol{padding-left:20px}
+dialog b{color:var(--ink)}
+dialog input{width:100%;font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--rule);border-radius:10px;padding:9px 12px;margin-bottom:10px}
+dialog .dlg-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:6px}
+dialog .dlg-btns .big-btn{padding:10px 16px;font-size:.92rem}
+.sync-status{font-size:.88rem;margin:0 0 12px;color:var(--ink)}
 @media (prefers-reduced-motion: reduce){.bar i{transition:none}}
 </style>
 </head>
@@ -116,16 +142,19 @@ main .wrap{padding-block:8px 48px}
   <div class="wrap">
     <div class="title-row">
       <h1>Everyday English<small>生活英文 5000</small></h1>
-      <div class="stats" id="stats"></div>
+      <div class="title-right"><div class="stats" id="stats"></div>
+      <button type="button" class="sync-btn" id="sync-btn" data-state="off"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 9.1 4.5 4.5 0 0 0 7 18z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span id="sync-label">同步</span></button></div>
     </div>
     <div class="modes" role="group" aria-label="模式">
       <button type="button" id="mode-today" data-mode="today" aria-pressed="true">今天學</button>
       <button type="button" id="mode-words" data-mode="words" aria-pressed="false">單字</button>
       <button type="button" id="mode-phrases" data-mode="phrases" aria-pressed="false">片語</button>
+      <button type="button" id="mode-lookup" data-mode="lookup" aria-pressed="false">查字</button>
       <button type="button" id="mode-review" data-mode="review" aria-pressed="false">複習</button>
     </div>
     <div class="search-row" id="search-row">
-      <input id="q" type="search" placeholder="搜尋英文或中文" autocomplete="off" aria-label="搜尋">
+      <input id="q" type="search" placeholder="搜尋英文或中文" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="搜尋">
+      <button type="button" class="go-btn" id="lookup-go" hidden>查</button>
       <button type="button" class="toggle-hard" id="hard-only" aria-pressed="false">
         <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>只看不熟
       </button>
@@ -133,6 +162,7 @@ main .wrap{padding-block:8px 48px}
   </div>
 </header>
 <main><div class="wrap"><div class="chips" id="chips"></div><div id="view"></div></div></main>
+<dialog id="sync-dlg"><div id="sync-body"></div></dialog>
 
 <script>
 const WORDS = [
@@ -806,17 +836,32 @@ const LEARN_ORDER = words.slice().sort((a,b) => a.level - b.level);
 
 // ---------- storage ----------
 const KEY_HARD = "everyday-english-500:hard";
+const KEY_HARD_T = "everyday-english:hard-t";
 const KEY_LEARNED = "everyday-english:learned";
 const KEY_TODAY = "everyday-english:today";
 const KEY_DAILY = "everyday-english:daily";
+const KEY_STAMPS = "everyday-english:stamps";
+const KEY_LOOKUPS = "everyday-english:lookups";
+const KEY_SYNC = "everyday-english:sync";
 function load(k, fallback){ try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fallback; } catch(e) { return fallback; } }
 function store(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
 let hard = new Set(load(KEY_HARD, []));
+let hardT = load(KEY_HARD_T, {});            // id -> 最後改星星的時間（同步用）
+hard.forEach(id => { if (!(id in hardT)) hardT[id] = 0; });
 let learned = new Set(load(KEY_LEARNED, []));
 let daily = load(KEY_DAILY, 20); if (![10,20,30].includes(daily)) daily = 20;
 let plan = load(KEY_TODAY, null);
-function setHard(id, on){ on ? hard.add(id) : hard.delete(id); store(KEY_HARD, [...hard]); renderStats(); }
-function setLearned(id){ learned.add(id); store(KEY_LEARNED, [...learned]); }
+let stamps = load(KEY_STAMPS, {daily:0, today:0});
+let lookups = load(KEY_LOOKUPS, {});         // id -> {en,pos,zh,def,ex,ipa,t} 或 {ref,t}；刪掉的留 {del:true,t}
+function saveHard(){ store(KEY_HARD, [...hard]); store(KEY_HARD_T, hardT); }
+function setHard(id, on){
+  if (hard.has(id) === on) return;
+  on ? hard.add(id) : hard.delete(id);
+  hardT[id] = Date.now();
+  saveHard(); renderStats(); queueSync();
+}
+function setLearned(id){ if (learned.has(id)) return; learned.add(id); store(KEY_LEARNED, [...learned]); queueSync(); }
+function saveLookups(){ store(KEY_LOOKUPS, lookups); queueSync(); }
 
 // ---------- speech ----------
 const canSpeak = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
@@ -834,20 +879,37 @@ function speak(text){
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ICON_SPEAK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
 const ICON_STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+const ICON_EDIT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z M13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+const ICON_DEL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 function shuffle(a){ for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function todayStr(){ const d = new Date(), p = n => String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
-function catName(x){ return x.id.startsWith("p:") ? PCAT_NAMES[x.cat] : CAT_NAMES[x.cat]; }
+function catName(x){ return x.id.startsWith("m:") ? "查過的" : x.id.startsWith("p:") ? PCAT_NAMES[x.cat] : CAT_NAMES[x.cat]; }
+
+// 單字表裡的字，或自己查字典存下的字
+function getItem(id){
+  const b = byId.get(id); if (b) return b;
+  const L = lookups[id];
+  if (!L || L.del || L.ref) return null;
+  return {id, en:L.en, pos:L.pos||"", zh:L.zh||"", def:L.def||"", ex:L.ex||"", ipa:L.ipa||"", kk:"", cat:"mine", level:0};
+}
+function historyIds(){
+  return Object.keys(lookups).filter(id => !lookups[id].del && getItem(lookups[id].ref || id))
+    .sort((a,b) => lookups[b].t - lookups[a].t);
+}
+function historyItems(){ return historyIds().map(id => getItem(lookups[id].ref || id)); }
 
 // ---------- state ----------
 const state = { mode:"today", level:"all", cat:"all", q:"", hardOnly:false };
 const review = { src:null, deck:[], i:0, flipped:false };
 let todayFlipped = false;
+let lookupUI = { status:"", id:null, word:"" };   // status: "", "loading", "done", "error"
 
 const $view = document.getElementById("view");
 const $chips = document.getElementById("chips");
 const $q = document.getElementById("q");
 const $hardOnly = document.getElementById("hard-only");
 const $searchRow = document.getElementById("search-row");
+const $lookupGo = document.getElementById("lookup-go");
 
 function learnedCount(){ let n = 0; for (const x of words) if (learned.has(x.id)) n++; return n; }
 function renderStats(){
@@ -885,21 +947,29 @@ function renderChips(){
   $chips.innerHTML = html;
 }
 
-function entryHTML(x){
+function entryHTML(x, opt){
+  opt = opt || {};
   const isHard = hard.has(x.id);
+  const mine = x.id.startsWith("m:");
   const lv = MULTI_LEVEL && x.id.startsWith("w:") ? `<span class="lv-tag">第${x.level}級</span>` : "";
-  return `<article class="entry${isHard?" is-hard":""}" data-id="${esc(x.id)}">
+  const sound = x.kk ? `<span class="kk">[${esc(x.kk)}]</span>` : x.ipa ? `<span class="ipa">${esc(x.ipa)}</span>` : "";
+  return `<article class="entry${isHard?" is-hard":""}" data-id="${esc(x.id)}"${opt.hist?` data-hist="${esc(opt.hist)}"`:""}>
     <div class="entry-main">
-      <div class="en-line"><span class="en">${esc(x.en)}</span>${x.kk?`<span class="kk">[${esc(x.kk)}]</span>`:""}${x.pos?`<span class="pos">${esc(x.pos)}</span>`:""}${lv}</div>
+      <div class="en-line"><span class="en">${esc(x.en)}</span>${sound}${x.pos?`<span class="pos">${esc(x.pos)}</span>`:""}${lv}</div>
       <div class="zh">${esc(x.zh)}</div>
-      <div class="ex">${esc(x.ex)}</div>
+      ${x.def?`<div class="def">${esc(x.def)}</div>`:""}
+      ${x.ex?`<div class="ex">${esc(x.ex)}</div>`:""}
     </div>
     <div class="actions">
       ${canSpeak?`<button type="button" class="icon-btn speak" aria-label="念出 ${esc(x.en)}">${ICON_SPEAK}</button>`:""}
       <button type="button" class="icon-btn star" aria-pressed="${isHard}" aria-label="標記不熟">${ICON_STAR}</button>
+      ${mine?`<button type="button" class="icon-btn edit" aria-label="改中文">${ICON_EDIT}</button>`:""}
+      ${opt.hist?`<button type="button" class="icon-btn del" aria-label="從查過的刪掉">${ICON_DEL}</button>`:""}
     </div>
   </article>`;
 }
+
+const looksEnglish = s => /^[a-zA-Z][a-zA-Z'’ .-]{0,40}$/.test(s.trim());
 
 function renderList(){
   const isWords = state.mode === "words";
@@ -917,28 +987,129 @@ function renderList(){
     const list = items.filter(x => x.cat === k && match(x));
     if (!list.length) return;
     total += list.length;
-    html += `<div class="section-label">${esc(names[k])} · ${list.length}</div>` + list.map(entryHTML).join("");
+    html += `<div class="section-label">${esc(names[k])} · ${list.length}</div>` + list.map(x => entryHTML(x)).join("");
   });
   if (!total){
     html = state.hardOnly && !q
       ? `<div class="empty">這裡還沒有標記不熟的字。<br>點每個字右邊的星星，就會加進來。</div>`
       : `<div class="empty">找不到「${esc(state.q)}」。<br>換個字試試看。</div>`;
   }
+  if (q && looksEnglish(q) && !ALL.some(x => x.en.toLowerCase() === q))
+    html = `<button type="button" class="dict-btn" data-dict="${esc(state.q.trim())}">查字典：${esc(state.q.trim())}</button>` + html;
   $view.innerHTML = html;
+}
+
+// ---------- lookup ----------
+const POS_SHORT = {noun:"n.",verb:"v.",adjective:"adj.",adverb:"adv.",preposition:"prep.",conjunction:"conj.",pronoun:"pron.",interjection:"interj.",exclamation:"interj.",article:"art.",determiner:"det.",abbreviation:"abbr.",phrase:"phr."};
+async function fetchDict(w){
+  const r = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(w));
+  if (!r.ok) return null;
+  const data = await r.json();
+  if (!Array.isArray(data) || !data.length) return null;
+  const e = data[0];
+  let ipa = e.phonetic || "";
+  if (!ipa) for (const d of data) for (const p of (d.phonetics || [])) if (!ipa && p.text) ipa = p.text;
+  const m = (e.meanings || [])[0] || {};
+  const poss = [...new Set(data.flatMap(d => (d.meanings || []).map(x => POS_SHORT[x.partOfSpeech] || "")).filter(Boolean))];
+  // 優先用「有例句」的那條解釋，解釋和例句才對得上
+  let def = ((m.definitions || [])[0] || {}).definition || "", ex = "";
+  for (const d of data) for (const mm of (d.meanings || [])) for (const df of (mm.definitions || [])) if (!ex && df.example) { ex = df.example; def = df.definition || def; }
+  return { en:e.word || w, ipa, pos:poss.slice(0,3).join(" "), def, ex };
+}
+async function fetchZh(w){
+  const r = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&dt=bd&q=" + encodeURIComponent(w));
+  if (!r.ok) return "";
+  const data = await r.json();
+  const terms = [];
+  const main = (data[0] || []).map(s => s && s[0]).filter(Boolean).join("");
+  if (main) terms.push(main);
+  (data[1] || []).forEach(g => (g[1] || []).slice(0,3).forEach(t => terms.push(t)));
+  // 翻不出來時 Google 會把英文原樣丟回來，所以只留有中文字的
+  const uniq = [...new Set(terms)].filter(t => /[㐀-鿿]/.test(t));
+  return uniq.slice(0,4).join("、");
+}
+function addHistory(id, entry){
+  lookups[id] = Object.assign(entry || { ref:id }, { t:Date.now() });
+  if (!entry) delete lookups[id].del;
+  saveLookups();
+}
+async function doLookup(raw){
+  const w = raw.trim().replace(/’/g, "'");
+  if (!w) return;
+  const lower = w.toLowerCase();
+  const built = ALL.find(x => x.en.toLowerCase() === lower);
+  if (built){
+    addHistory(built.id);
+    setHard(built.id, true);
+    lookupUI = { status:"done", id:built.id, word:w, note:"單字表裡就有這個字，已經幫你存到「查過的」，也標成不熟了。" };
+    renderLookup(); return;
+  }
+  if (!looksEnglish(w)){ lookupUI = { status:"error", word:w, msg:"查字典只能查英文喔。" }; renderLookup(); return; }
+  const mid = "m:" + lower;
+  const old = lookups[mid];
+  if (old && !old.del && !old.ref){
+    old.t = Date.now(); saveLookups(); setHard(mid, true);
+    lookupUI = { status:"done", id:mid, word:w, note:"這個字之前查過了，已經移到最上面。" };
+    renderLookup(); return;
+  }
+  lookupUI = { status:"loading", word:w };
+  renderLookup();
+  const [d, z] = await Promise.allSettled([fetchDict(lower), fetchZh(lower)]);
+  const dict = d.status === "fulfilled" ? d.value : null;
+  const zh = z.status === "fulfilled" ? z.value : "";
+  if (lookupUI.word !== w) return;              // 等的時候又查了別的字
+  if (!dict && !zh){
+    lookupUI = { status:"error", word:w, msg: navigator.onLine === false ? "現在沒有網路，連上網路再查一次。" : `查不到「${w}」。檢查一下拼字再試試看。` };
+    renderLookup(); return;
+  }
+  const entry = { en: dict ? dict.en : lower, pos: dict ? dict.pos : "", zh: zh || "（沒有中文翻譯，可以按鉛筆自己填）", def: dict ? dict.def : "", ex: dict ? dict.ex : "", ipa: dict ? dict.ipa : "" };
+  addHistory(mid, entry);
+  setHard(mid, true);
+  lookupUI = { status:"done", id:mid, word:w, note:"已經存到「查過的」，也標成不熟了。中文不對的話，可以按鉛筆改。" };
+  renderLookup();
+}
+function renderLookup(){
+  const q = state.q.trim(), lq = q.toLowerCase();
+  let html = "";
+  if (lookupUI.status === "loading") html += `<div class="lookup-msg">正在查「${esc(lookupUI.word)}」…</div>`;
+  else if (lookupUI.status === "error") html += `<div class="lookup-msg">${esc(lookupUI.msg)}</div>`;
+  else if (lookupUI.status === "done"){
+    const x = getItem(lookupUI.id);
+    if (x) html += `<div class="lookup-box"><div class="note">${esc(lookupUI.note)}</div>${entryHTML(x)}</div>`;
+  }
+  if (q && lookupUI.status !== "loading" && !(lookupUI.status === "done" && lookupUI.word.toLowerCase() === lq)){
+    const exact = ALL.find(x => x.en.toLowerCase() === lq);
+    html += `<button type="button" class="dict-btn" data-dict="${esc(q)}">${exact ? "存下：" : "查字典："}${esc(q)}</button>`;
+    const hits = ALL.filter(x => x.en.toLowerCase().startsWith(lq) || x.zh.includes(q)).slice(0, 8);
+    if (hits.length) html += `<div class="section-label">單字表裡的 · ${hits.length}</div>` + hits.map(x => entryHTML(x)).join("");
+  }
+  const hist = historyIds();
+  html += `<div class="section-label">查過的 · ${hist.length}</div>`;
+  html += hist.length
+    ? hist.map(id => entryHTML(getItem(lookups[id].ref || id), {hist:id})).join("")
+    : `<div class="empty">還沒有查過的字。<br>在上面輸入英文，按「查」就會查字典，<br>而且自動存下來，之後可以複習。</div>`;
+  $view.innerHTML = html;
+}
+function removeHistory(hid){
+  const L = lookups[hid]; if (!L) return;
+  setHard(L.ref || hid, false);
+  lookups[hid] = { del:true, t:Date.now() };
+  if (lookupUI.id === (L.ref || hid)) lookupUI = { status:"" , id:null, word:"" };
+  saveLookups();
 }
 
 // ---------- card ----------
 function cardHTML(x, flipped){
   const isHard = hard.has(x.id);
-  const tag = x.id.startsWith("w:") ? `第${x.level}級・${catName(x)}` : `片語・${catName(x)}`;
+  const tag = x.id.startsWith("w:") ? `第${x.level}級・${catName(x)}` : x.id.startsWith("m:") ? "查過的" : `片語・${catName(x)}`;
   return `<div class="card${isHard?" is-hard":""}" id="card" tabindex="0" role="button" aria-label="翻面">
       <span class="tag">${esc(tag)}</span>
       ${canSpeak?`<button type="button" class="icon-btn speak-card" id="card-speak" aria-label="念出來">${ICON_SPEAK}</button>`:""}
       <div class="en">${esc(x.en)}</div>
-      ${x.kk?`<div class="kk">[${esc(x.kk)}]</div>`:""}
+      ${x.kk?`<div class="kk">[${esc(x.kk)}]</div>`:x.ipa?`<div class="ipa">${esc(x.ipa)}</div>`:""}
       ${x.pos?`<div class="pos">${esc(x.pos)}</div>`:""}
       ${flipped
-        ? `<div class="zh">${esc(x.zh)}</div><div class="ex">${esc(x.ex)}</div>`
+        ? `<div class="zh">${esc(x.zh)}</div>${x.def?`<div class="def">${esc(x.def)}</div>`:""}${x.ex?`<div class="ex">${esc(x.ex)}</div>`:""}`
         : `<div class="hint">點一下看中文</div>`}
     </div>
     <div class="review-btns">
@@ -956,7 +1127,7 @@ function pickNew(n, exclude){
   }
   return out;
 }
-function savePlan(){ store(KEY_TODAY, plan); }
+function savePlan(){ store(KEY_TODAY, plan); stamps.today = Date.now(); store(KEY_STAMPS, stamps); queueSync(); }
 function ensurePlan(){
   const t = todayStr();
   if (!plan || plan.date !== t || !Array.isArray(plan.ids)){
@@ -1005,6 +1176,7 @@ function nextToday(markHard){
 }
 function changeDaily(v){
   daily = v; store(KEY_DAILY, daily);
+  stamps.daily = Date.now(); store(KEY_STAMPS, stamps);
   const seen = plan.ids.slice(0, plan.i);
   plan.ids = seen.concat(pickNew(Math.max(daily - seen.length, 0), new Set(seen)));
   savePlan(); renderToday();
@@ -1012,7 +1184,7 @@ function changeDaily(v){
 
 // ---------- review ----------
 function reviewSources(){
-  const opts = [{v:"hard", t:`只複習不熟（${hard.size}）`}, {v:"learned", t:`今天學過的字`}, {v:"words", t:`全部單字（${words.length}）`}];
+  const opts = [{v:"hard", t:`只複習不熟（${hard.size}）`}, {v:"mine", t:`我查過的（${historyIds().length}）`}, {v:"learned", t:`今天學過的字`}, {v:"words", t:`全部單字（${words.length}）`}];
   if (MULTI_LEVEL) LEVELS.forEach(l => { if (LEVEL_COUNT[l]) opts.push({v:"lv"+l, t:`第${l}級・${LEVEL_NAMES[l]}（${LEVEL_COUNT[l]}）`}); });
   CAT_ORDER.forEach(k => opts.push({v:"c:"+k, t:`單字・${CAT_NAMES[k]}`}));
   opts.push({v:"phrases", t:`全部片語（${phrases.length}）`});
@@ -1020,7 +1192,8 @@ function reviewSources(){
   return opts;
 }
 function poolFor(src){
-  if (src === "hard") return ALL.filter(x => hard.has(x.id));
+  if (src === "hard") return [...hard].map(getItem).filter(Boolean);
+  if (src === "mine") return historyItems();
   if (src === "learned") { ensurePlan(); return plan.ids.slice(0, plan.i).map(id => byId.get(id)); }
   if (src === "words") return words.slice();
   if (src === "phrases") return phrases.slice();
@@ -1037,19 +1210,24 @@ function startDeck(src){
 }
 function renderReview(){
   if (!review.src) { review.src = hard.size ? "hard" : "words"; review.deck = shuffle(poolFor(review.src).map(x=>x.id)); review.i = 0; }
+  // 同步或刪除後，牌裡可能有已經不存在的字
+  const keep = review.deck.slice(0, review.i).filter(id => getItem(id)).length;
+  review.deck = review.deck.filter(id => getItem(id)); review.i = Math.min(keep, review.deck.length);
   const opts = reviewSources().map(o => `<option value="${o.v}"${o.v===review.src?" selected":""}>${esc(o.t)}</option>`).join("");
   const n = review.deck.length, i = review.i;
   let body;
   if (!n){
     body = review.src === "learned"
       ? `<div class="done"><h2>今天還沒學新字</h2><p>先到「今天學」學幾個字，<br>再回來這裡複習。</p></div>`
+      : review.src === "mine"
+      ? `<div class="done"><h2>還沒有查過的字</h2><p>到「查字」輸入英文查字典，<br>查過的字會自動出現在這裡。</p></div>`
       : `<div class="done"><h2>還沒有不熟的字</h2><p>在「單字」或「片語」頁，點星星標記不熟的字，<br>它們就會出現在這裡。</p></div>`;
   } else if (i >= n){
     const left = review.deck.filter(id => hard.has(id)).length;
     body = `<div class="done"><h2>這一輪做完了</h2><p>共 ${n} 張，其中 ${left} 張還標著不熟。</p>
       <div class="done-btns"><button type="button" class="big-btn know" id="again">再來一輪</button></div></div>`;
   } else {
-    body = cardHTML(byId.get(review.deck[i]), review.flipped) +
+    body = cardHTML(getItem(review.deck[i]), review.flipped) +
       `<button type="button" class="link-btn" id="reshuffle">重新洗牌</button>`;
   }
   $view.innerHTML = `<div class="review">
@@ -1070,15 +1248,160 @@ function goReviewHard(){
   render(); window.scrollTo(0,0);
 }
 
+// ---------- sync（存在自己的 GitHub Gist） ----------
+const GIST_FILE = "english-5000-sync.json";
+let syncCfg = load(KEY_SYNC, null);       // {token, gistId, last}
+let syncBusy = false, syncAgain = false, syncTimer = null, syncErr = "";
+const $syncBtn = document.getElementById("sync-btn");
+const $syncDlg = document.getElementById("sync-dlg");
+
+function buildDoc(){
+  const h = {};
+  Object.keys(hardT).forEach(id => h[id] = [hard.has(id) ? 1 : 0, hardT[id] || 0]);
+  return { v:1, hard:h, learned:[...learned].sort(), lookups, daily:[daily, stamps.daily || 0], today:[plan, stamps.today || 0] };
+}
+// 每一筆都比時間，新的贏；學過的字只會增加
+function mergeDoc(r){
+  let changed = false;
+  if (!r || r.v !== 1) return false;
+  for (const [id, [on, t]] of Object.entries(r.hard || {})){
+    const lt = id in hardT ? hardT[id] : -1;
+    if (t > lt){ hardT[id] = t; if (on) hard.add(id); else hard.delete(id); changed = true; }
+  }
+  for (const id of (r.learned || [])) if (!learned.has(id)){ learned.add(id); changed = true; }
+  for (const [id, L] of Object.entries(r.lookups || {})){
+    if (!lookups[id] || (L.t || 0) > (lookups[id].t || 0)){ lookups[id] = L; changed = true; }
+  }
+  if (Array.isArray(r.daily) && r.daily[1] > (stamps.daily || 0) && [10,20,30].includes(r.daily[0])){
+    daily = r.daily[0]; stamps.daily = r.daily[1]; changed = true;
+  }
+  if (Array.isArray(r.today) && r.today[0] && r.today[1] > (stamps.today || 0)){
+    plan = r.today[0]; stamps.today = r.today[1]; todayFlipped = false; changed = true;
+  }
+  if (changed){
+    saveHard(); store(KEY_LEARNED, [...learned]); store(KEY_LOOKUPS, lookups);
+    store(KEY_DAILY, daily); store(KEY_TODAY, plan); store(KEY_STAMPS, stamps);
+  }
+  return changed;
+}
+async function gh(path, opt){
+  const r = await fetch("https://api.github.com" + path, Object.assign({ cache:"no-store" }, opt, {
+    headers: Object.assign({ "Authorization":"Bearer " + syncCfg.token, "Accept":"application/vnd.github+json" }, (opt && opt.body) ? {"Content-Type":"application/json"} : {})
+  }));
+  if (r.status === 401) throw new Error("token");
+  if (!r.ok) throw new Error("http " + r.status);
+  return r.json();
+}
+async function findOrCreateGist(){
+  for (let page = 1; page <= 5; page++){
+    const list = await gh(`/gists?per_page=100&page=${page}`);
+    const g = list.find(g => g.files && g.files[GIST_FILE]);
+    if (g) return g.id;
+    if (list.length < 100) break;
+  }
+  const g = await gh("/gists", { method:"POST", body: JSON.stringify({ description:"生活英文 5000 同步資料（請勿刪除）", public:false, files:{ [GIST_FILE]:{ content: JSON.stringify(buildDoc()) } } }) });
+  return g.id;
+}
+async function syncNow(){
+  if (!syncCfg || !syncCfg.token) return;
+  if (syncBusy){ syncAgain = true; return; }
+  syncBusy = true; syncErr = ""; showSync("busy");
+  try {
+    if (!syncCfg.gistId){ syncCfg.gistId = await findOrCreateGist(); store(KEY_SYNC, syncCfg); }
+    const g = await gh("/gists/" + syncCfg.gistId);
+    const f = g.files && g.files[GIST_FILE];
+    let raw = f ? f.content : "";
+    if (f && f.truncated && f.raw_url) raw = await (await fetch(f.raw_url, {cache:"no-store"})).text();
+    let remote = null; try { remote = JSON.parse(raw); } catch(e) {}
+    if (mergeDoc(remote)) refreshAfterSync();
+    const mine = JSON.stringify(buildDoc());
+    if (mine !== raw) await gh("/gists/" + syncCfg.gistId, { method:"PATCH", body: JSON.stringify({ files:{ [GIST_FILE]:{ content: mine } } }) });
+    syncCfg.last = Date.now(); store(KEY_SYNC, syncCfg);
+    showSync("ok");
+  } catch(e){
+    if (e.message === "http 404"){ syncCfg.gistId = null; store(KEY_SYNC, syncCfg); }
+    syncErr = e.message === "token" ? "通行碼不能用了（可能過期或被刪掉），請重新貼一組。"
+      : navigator.onLine === false ? "現在沒有網路，連上網路後會自動同步。" : "同步失敗，等一下會再試。";
+    showSync("err");
+  }
+  syncBusy = false;
+  if (syncAgain){ syncAgain = false; queueSync(); }
+}
+function queueSync(){
+  if (!syncCfg || !syncCfg.token) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncNow, 1500);
+}
+function refreshAfterSync(){
+  // 卡片做到一半時不要整頁重畫，免得跳掉
+  if (state.mode === "today" || state.mode === "review") { renderStats(); return; }
+  render();
+}
+function showSync(st){
+  if (!syncCfg) st = "off";
+  $syncBtn.dataset.state = st;
+  document.getElementById("sync-label").textContent = {off:"同步", busy:"同步中", ok:"已同步", err:"同步失敗"}[st];
+  if ($syncDlg.open) renderSyncDlg();
+}
+function renderSyncDlg(){
+  const $b = document.getElementById("sync-body");
+  if (syncCfg){
+    const t = syncCfg.last ? new Date(syncCfg.last) : null;
+    const when = t ? `${t.getMonth()+1}/${t.getDate()} ${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}` : "還沒同步過";
+    $b.innerHTML = `<h2>同步已開啟</h2>
+      <p class="sync-status">${syncErr ? esc(syncErr) : `上次同步：${when}`}</p>
+      <p>查過的字、不熟的星星、學過的字，會自動存到你的 GitHub，其他裝置打開就會看到。</p>
+      <div class="dlg-btns"><button type="button" class="big-btn" id="sync-off">這台裝置停用同步</button>
+      <button type="button" class="big-btn" id="sync-now">立刻同步</button>
+      <button type="button" class="big-btn know" id="sync-close">關閉</button></div>`;
+  } else {
+    $b.innerHTML = `<h2>在不同裝置同步</h2>
+      <p>資料會存在你自己的 GitHub 裡。每台裝置貼一次「通行碼」就好。</p>
+      <ol><li>到 GitHub 申請一組只有 <b>gist</b> 權限的通行碼（token）。</li><li>把它貼在下面，按「開始同步」。</li></ol>
+      <p>通行碼只存在這台裝置，不會放進網頁檔案。</p>
+      ${syncErr ? `<p class="sync-status">${esc(syncErr)}</p>` : ""}
+      <input id="sync-token" type="password" placeholder="貼上通行碼（ghp_ 開頭）" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="dlg-btns"><button type="button" class="big-btn" id="sync-close">取消</button>
+      <button type="button" class="big-btn know" id="sync-on">開始同步</button></div>`;
+  }
+}
+$syncBtn.addEventListener("click", () => { renderSyncDlg(); try { $syncDlg.showModal(); } catch(e) { $syncDlg.setAttribute("open",""); } });
+$syncDlg.addEventListener("click", async e => {
+  if (e.target === $syncDlg || e.target.closest("#sync-close")) { $syncDlg.close(); return; }
+  if (e.target.closest("#sync-now")) { syncNow(); return; }
+  if (e.target.closest("#sync-off")) {
+    if (!confirm("這台裝置停用同步？\n（GitHub 上的資料不會被刪掉，之後可以再貼通行碼接回來。）")) return;
+    syncCfg = null; syncErr = ""; try { localStorage.removeItem(KEY_SYNC); } catch(err) {}
+    showSync("off"); renderSyncDlg(); return;
+  }
+  if (e.target.closest("#sync-on")) {
+    const token = document.getElementById("sync-token").value.trim();
+    if (!token) { document.getElementById("sync-token").focus(); return; }
+    syncCfg = { token, gistId:null, last:0 }; store(KEY_SYNC, syncCfg);
+    await syncNow();
+    if (syncErr === "通行碼不能用了（可能過期或被刪掉），請重新貼一組。"){
+      syncCfg = null; try { localStorage.removeItem(KEY_SYNC); } catch(err) {}
+      syncErr = "這組通行碼不能用。檢查一下有沒有貼完整，或有沒有勾 gist。";
+      showSync("off");
+    }
+    renderSyncDlg();
+  }
+});
+
 // ---------- render ----------
 function render(){
   document.querySelectorAll(".modes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === state.mode));
-  $searchRow.hidden = !(state.mode === "words" || state.mode === "phrases");
+  const isLookup = state.mode === "lookup";
+  $searchRow.hidden = !(state.mode === "words" || state.mode === "phrases" || isLookup);
+  $hardOnly.hidden = isLookup;
+  $lookupGo.hidden = !isLookup;
+  $q.placeholder = isLookup ? "輸入英文單字，按「查」" : "搜尋英文或中文";
   $hardOnly.setAttribute("aria-pressed", state.hardOnly);
   renderChips();
   renderStats();
   if (state.mode === "today") renderToday();
   else if (state.mode === "review") renderReview();
+  else if (isLookup) renderLookup();
   else renderList();
 }
 
@@ -1087,6 +1410,7 @@ document.querySelector(".modes").addEventListener("click", e => {
   const b = e.target.closest("button[data-mode]"); if (!b) return;
   if (state.mode !== b.dataset.mode){ state.mode = b.dataset.mode; state.cat = "all"; }
   render(); window.scrollTo(0,0);
+  if (state.mode === "lookup") $q.focus();
 });
 $chips.addEventListener("click", e => {
   const b = e.target.closest(".chip"); if (!b || b.disabled) return;
@@ -1094,7 +1418,19 @@ $chips.addEventListener("click", e => {
   if (b.dataset.cat){ state.cat = b.dataset.cat; }
   renderChips(); renderList(); window.scrollTo(0,0);
 });
-$q.addEventListener("input", () => { state.q = $q.value; renderList(); });
+$q.addEventListener("input", () => {
+  state.q = $q.value;
+  if (state.mode === "lookup"){ if (lookupUI.status !== "loading") lookupUI = { status:"", id:null, word:"" }; renderLookup(); }
+  else renderList();
+});
+$q.addEventListener("keydown", e => {
+  if (e.key !== "Enter" || e.isComposing) return;
+  if (state.mode !== "lookup" && !looksEnglish($q.value)) return;
+  e.preventDefault();
+  if (state.mode !== "lookup"){ state.mode = "lookup"; render(); }
+  doLookup($q.value); $q.blur();
+});
+$lookupGo.addEventListener("click", () => { doLookup($q.value); $q.blur(); });
 $hardOnly.addEventListener("click", () => { state.hardOnly = !state.hardOnly; $hardOnly.setAttribute("aria-pressed", state.hardOnly); renderList(); });
 
 function flipCard(){
@@ -1104,20 +1440,35 @@ function flipCard(){
 function currentCardId(){ return state.mode === "today" ? plan.ids[plan.i] : review.deck[review.i]; }
 
 $view.addEventListener("click", e => {
+  const dict = e.target.closest(".dict-btn");
+  if (dict){ const w = dict.dataset.dict; state.mode = "lookup"; state.q = w; $q.value = w; render(); doLookup(w); window.scrollTo(0,0); return; }
   const entry = e.target.closest(".entry");
   if (entry){
-    const x = byId.get(entry.dataset.id);
+    const x = getItem(entry.dataset.id); if (!x) return;
     if (e.target.closest(".speak")) { speak(x.en); return; }
+    if (e.target.closest(".del")) {
+      if (!confirm(`把「${x.en}」從查過的刪掉？`)) return;
+      removeHistory(entry.dataset.hist); renderLookup(); return;
+    }
+    if (e.target.closest(".edit")) {
+      const L = lookups[x.id]; if (!L) return;
+      const v = prompt(`「${x.en}」的中文意思：`, L.zh || "");
+      if (v === null) return;
+      L.zh = v.trim(); L.t = Date.now(); saveLookups();
+      state.mode === "lookup" ? renderLookup() : renderList(); return;
+    }
     const star = e.target.closest(".star");
     if (star){
       const on = !hard.has(x.id);
       setHard(x.id, on);
-      star.setAttribute("aria-pressed", on);
-      entry.classList.toggle("is-hard", on);
+      document.querySelectorAll(`.entry[data-id="${CSS.escape(x.id)}"]`).forEach(el => {
+        el.classList.toggle("is-hard", on);
+        el.querySelector(".star")?.setAttribute("aria-pressed", on);
+      });
     }
     return;
   }
-  if (e.target.closest("#card-speak")) { speak(byId.get(currentCardId()).en); return; }
+  if (e.target.closest("#card-speak")) { const x = getItem(currentCardId()); if (x) speak(x.en); return; }
   if (e.target.closest("#card")) { flipCard(); return; }
   const markHard = e.target.closest("#btn-hard"), markKnow = e.target.closest("#btn-know");
   if (markHard || markKnow){
@@ -1135,12 +1486,17 @@ $view.addEventListener("change", e => {
 $view.addEventListener("keydown", e => {
   if (e.target.id === "card" && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); flipCard(); document.getElementById("card")?.focus(); }
 });
-// 過了半夜回到頁面時，換成新的一天
+// 回到頁面時：過了半夜換成新的一天；有開同步就抓一次最新的
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && state.mode === "today" && plan && plan.date !== todayStr()) renderToday();
+  if (document.hidden) return;
+  if (state.mode === "today" && plan && plan.date !== todayStr()) renderToday();
+  if (syncCfg) syncNow();
 });
+window.addEventListener("online", () => { if (syncCfg) syncNow(); });
 
 render();
+showSync(syncCfg ? (syncCfg.last ? "ok" : "busy") : "off");
+if (syncCfg) syncNow();
 </script>
 </body>
 </html>
