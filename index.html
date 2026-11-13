@@ -40,8 +40,8 @@ h1{margin:0;font-family:var(--font-en);font-weight:700;font-size:1.35rem;letter-
 h1 small{font-family:var(--font-zh);font-weight:500;font-size:.8rem;color:var(--muted);margin-left:6px}
 .stats{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .stats b{color:var(--ink);font-weight:700}
-.modes{display:grid;grid-template-columns:repeat(5,1fr);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px}
-.modes button{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:500;font-size:.95rem;padding:8px 0;border-radius:7px;cursor:pointer}
+.modes{display:grid;grid-template-columns:repeat(6,1fr);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:3px}
+.modes button{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:500;font-size:.9rem;padding:8px 0;border-radius:7px;cursor:pointer;white-space:nowrap}
 .modes button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .search-row{display:flex;gap:8px}
 .search-row input{flex:1;min-width:0;font:inherit;font-size:1rem;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:9px 12px}
@@ -134,6 +134,35 @@ dialog input{width:100%;font:inherit;font-size:.95rem;color:var(--ink);backgroun
 dialog .dlg-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:6px}
 dialog .dlg-btns .big-btn{padding:10px 16px;font-size:.92rem}
 .sync-status{font-size:.88rem;margin:0 0 12px;color:var(--ink)}
+/* reading: sentences flow as paragraphs; a tapped sentence drops its Chinese right under it */
+.art{display:block;width:100%;text-align:left;appearance:none;background:transparent;border:0;border-bottom:1px solid var(--rule);padding:12px 0;font:inherit;color:var(--ink);cursor:pointer}
+.art-en{display:block;font-family:var(--font-en);font-weight:700;font-size:1.08rem;line-height:1.3}
+.art-meta{display:flex;gap:4px 10px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin-top:4px}
+.art-meta .ok{color:var(--accent);font-weight:700}
+.reader{padding-top:6px}
+.reader .back{padding:8px 0;display:inline-block}
+.art-cat{font-size:.8rem;color:var(--muted)}
+.art-title{font-family:var(--font-en);font-weight:700;font-size:1.45rem;line-height:1.3;margin:4px 0 12px}
+.reader audio{display:block;width:100%;margin:2px 0 8px}
+.read-tip{font-size:.82rem;color:var(--muted);margin:0 0 14px}
+.para{font-family:var(--font-en);font-size:1.12rem;line-height:1.8;margin:0 0 16px}
+.art-h{font-family:var(--font-en);font-size:1.12rem;font-weight:700;margin:24px 0 8px}
+.sent{cursor:pointer;border-radius:3px;outline-offset:1px}
+@media (hover:hover){.sent:hover{background:var(--rule)}}
+.sent.marked{background:linear-gradient(transparent 62%,var(--hl-soft) 62%)}
+.sent.open{color:var(--accent)}
+.sz{display:flex;align-items:flex-start;gap:4px;font-family:var(--font-zh);font-size:1rem;font-weight:500;line-height:1.6;color:var(--ink);background:var(--paper);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:6px 4px 6px 12px;margin:6px 0 10px}
+.sz-text{flex:1;padding-top:5px}
+.sz .icon-btn{width:36px;height:36px}
+.rw{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--rule)}
+.rw-main{flex:1;min-width:0;cursor:pointer}
+.rw .en{font-size:1.1rem}
+.rw-hint{font-size:.78rem;color:var(--muted);margin-top:2px}
+.read-done{width:100%;margin-top:24px}
+.src{font-size:.8rem;color:var(--muted);margin-top:16px}
+.src a{color:var(--accent)}
+.tap-row{padding:10px 0;border-bottom:1px solid var(--rule);font-family:var(--font-en);font-size:1.05rem;line-height:1.65}
+.tap-art{appearance:none;display:block;width:100%;text-align:left;background:none;border:0;font:inherit;font-size:.8rem;font-weight:700;color:var(--accent);padding:18px 0 4px;cursor:pointer}
 @media (prefers-reduced-motion: reduce){.bar i{transition:none}}
 </style>
 </head>
@@ -151,6 +180,7 @@ dialog .dlg-btns .big-btn{padding:10px 16px;font-size:.92rem}
       <button type="button" id="mode-phrases" data-mode="phrases" aria-pressed="false">片語</button>
       <button type="button" id="mode-lookup" data-mode="lookup" aria-pressed="false">查字</button>
       <button type="button" id="mode-review" data-mode="review" aria-pressed="false">複習</button>
+      <button type="button" id="mode-read" data-mode="read" aria-pressed="false">閱讀</button>
     </div>
     <div class="search-row" id="search-row">
       <input id="q" type="search" placeholder="搜尋英文或中文" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="搜尋">
@@ -853,6 +883,11 @@ let daily = load(KEY_DAILY, 20); if (![10,20,30].includes(daily)) daily = 20;
 let plan = load(KEY_TODAY, null);
 let stamps = load(KEY_STAMPS, {daily:0, today:0});
 let lookups = load(KEY_LOOKUPS, {});         // id -> {en,pos,zh,def,ex,ipa,t} 或 {ref,t}；刪掉的留 {del:true,t}
+const KEY_READ = "everyday-english:read";
+let readRec = load(KEY_READ, null);           // {taps:{"文章id:句號":[開關,時間]}, done:{文章id:[開關,時間]}}
+if (!readRec || typeof readRec !== "object") readRec = {};
+if (!readRec.taps) readRec.taps = {};
+if (!readRec.done) readRec.done = {};
 function saveHard(){ store(KEY_HARD, [...hard]); store(KEY_HARD_T, hardT); }
 function setHard(id, on){
   if (hard.has(id) === on) return;
@@ -913,12 +948,18 @@ const $lookupGo = document.getElementById("lookup-go");
 
 function learnedCount(){ let n = 0; for (const x of words) if (learned.has(x.id)) n++; return n; }
 function renderStats(){
+  if (state.mode === "read" && readData){
+    document.getElementById("stats").innerHTML =
+      `文章 <b>${readData.articles.length}</b> · 讀完 <b>${doneCount()}</b> · 難句 <b>${tapKeys().length}</b>`;
+    return;
+  }
   document.getElementById("stats").innerHTML =
     `單字 <b>${words.length}</b> · 已學 <b>${learnedCount()}</b> · 不熟 <b>${hard.size}</b>`;
 }
 
 // ---------- list ----------
 function renderChips(){
+  if (state.mode === "read"){ renderReadChips(); return; }
   if (state.mode !== "words" && state.mode !== "phrases"){ $chips.hidden = true; return; }
   $chips.hidden = false;
   let html = "";
@@ -1258,7 +1299,7 @@ const $syncDlg = document.getElementById("sync-dlg");
 function buildDoc(){
   const h = {};
   Object.keys(hardT).forEach(id => h[id] = [hard.has(id) ? 1 : 0, hardT[id] || 0]);
-  return { v:1, hard:h, learned:[...learned].sort(), lookups, daily:[daily, stamps.daily || 0], today:[plan, stamps.today || 0] };
+  return { v:1, hard:h, learned:[...learned].sort(), lookups, daily:[daily, stamps.daily || 0], today:[plan, stamps.today || 0], read:readRec };
 }
 // 每一筆都比時間，新的贏；學過的字只會增加
 function mergeDoc(r){
@@ -1278,7 +1319,13 @@ function mergeDoc(r){
   if (Array.isArray(r.today) && r.today[0] && r.today[1] > (stamps.today || 0)){
     plan = r.today[0]; stamps.today = r.today[1]; todayFlipped = false; changed = true;
   }
+  // 閱讀：難句、讀完，每一筆比時間
+  if (r.read) for (const g of ["taps", "done"]) for (const [k, v] of Object.entries(r.read[g] || {})){
+    const l = readRec[g][k];
+    if (Array.isArray(v) && (!l || v[1] > l[1])){ readRec[g][k] = v; changed = true; }
+  }
   if (changed){
+    store(KEY_READ, readRec);
     saveHard(); store(KEY_LEARNED, [...learned]); store(KEY_LOOKUPS, lookups);
     store(KEY_DAILY, daily); store(KEY_TODAY, plan); store(KEY_STAMPS, stamps);
   }
@@ -1335,6 +1382,8 @@ function queueSync(){
 function refreshAfterSync(){
   // 卡片做到一半時不要整頁重畫，免得跳掉
   if (state.mode === "today" || state.mode === "review") { renderStats(); return; }
+  // 讀文章時不要整頁重畫，免得朗讀被打斷
+  if (state.mode === "read" && read.art) { renderStats(); refreshReaderMarks(); return; }
   render();
 }
 function showSync(st){
@@ -1388,10 +1437,231 @@ $syncDlg.addEventListener("click", async e => {
   }
 });
 
+// ---------- reading（VOA 文章，點句子才看中文） ----------
+const READ_FILE = "reading.json", READ_VER = 1;   // 換 reading.json 時把 READ_VER +1，手機才不會拿到舊檔
+let readData = null, readLoading = false, readErr = "";
+const read = { cat:"all", art:null, open:new Set(), listY:0 };
+
+function loadReading(){
+  if (readData || readLoading) return;
+  readLoading = true; readErr = "";
+  fetch(READ_FILE + "?v=" + READ_VER)
+    .then(r => { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+    .then(d => {
+      d.byId = new Map(d.articles.map(a => [a.id, a]));
+      d.catName = Object.fromEntries(d.cats.map(c => [c.key, c.name]));
+      d.articles.forEach(a => {      // 句子編號整篇連續，存難句用「文章id:編號」
+        let n = 0; a.sents = [];
+        a.paras.forEach(p => { if (p.s){ p.i0 = n; p.s.forEach(x => a.sents.push(x)); n += p.s.length; } });
+      });
+      readData = d;
+    })
+    .catch(() => { readErr = location.protocol === "file:"
+        ? "直接打開電腦裡的檔案時讀不到文章。請從網站網址打開。"
+        : "文章載入失敗。確認有網路，再試一次。"; })
+    .finally(() => { readLoading = false; if (state.mode === "read") render(); });
+}
+const recOn = (g, k) => !!(readRec[g][k] && readRec[g][k][0]);
+function setRec(g, k, on){ readRec[g][k] = [on ? 1 : 0, Date.now()]; store(KEY_READ, readRec); queueSync(); renderStats(); }
+function tapKeys(){
+  if (!readData) return [];
+  return Object.keys(readRec.taps).filter(k => {
+    if (!recOn("taps", k)) return false;
+    const [aid, i] = k.split(":"), a = readData.byId.get(aid);
+    return a && a.sents[+i];
+  }).sort((a, b) => readRec.taps[b][1] - readRec.taps[a][1]);
+}
+function doneCount(){ return readData ? readData.articles.filter(a => recOn("done", a.id)).length : 0; }
+function fmtDate(s){ const [y, m, d] = s.split("-"); return `${y}/${+m}/${+d}`; }
+
+function renderReadChips(){
+  if (!readData || read.art){ $chips.hidden = true; return; }
+  $chips.hidden = false;
+  const arts = readData.articles, nTap = tapKeys().length;
+  let html = `<div class="chip-row" aria-label="分類"><button type="button" class="chip" data-rcat="all" aria-pressed="${read.cat==="all"}">全部<span>${arts.length}</span></button>`;
+  readData.cats.forEach(c => {
+    html += `<button type="button" class="chip" data-rcat="${c.key}" aria-pressed="${read.cat===c.key}">${esc(c.name)}<span>${arts.filter(a => a.cat === c.key).length}</span></button>`;
+  });
+  html += `<button type="button" class="chip" data-rcat="taps" aria-pressed="${read.cat==="taps"}">我的難句<span>${nTap}</span></button></div>`;
+  $chips.innerHTML = html;
+}
+
+// 一句英文；打開時下面接中文
+function sentHTML(aid, i, en, zh){
+  const k = aid + ":" + i, open = read.open.has(k);
+  return `<span class="sent${recOn("taps", k)?" marked":""}${open?" open":""}" data-a="${aid}" data-i="${i}" role="button" tabindex="0">${esc(en)}</span>` + (open ? szHTML(zh, en, k) : "");
+}
+function szHTML(zh, en, k){
+  return `<span class="sz"><span class="sz-text">${esc(zh)}</span>` +
+    (canSpeak ? `<button type="button" class="icon-btn sz-speak" data-say="${esc(en)}" aria-label="念這一句">${ICON_SPEAK}</button>` : "") +
+    (k ? `<button type="button" class="icon-btn star sz-star" data-k="${k}" aria-pressed="${recOn("taps", k)}" aria-label="標成難句">${ICON_STAR}</button>` : "") +
+    `</span>`;
+}
+// 標題、小標題：點了也看中文，但不算難句
+function plainHTML(en, zh){
+  return `<span class="sent" data-zh="${esc(zh || "")}" data-say="${esc(en)}" role="button" tabindex="0">${esc(en)}</span>`;
+}
+
+function renderReadList(){
+  if (!readData){
+    $view.innerHTML = readErr ? `<div class="lookup-msg">${esc(readErr)}</div><button type="button" class="dict-btn" id="read-retry">再試一次</button>` : `<div class="lookup-msg">文章載入中…</div>`;
+    if (!readErr) loadReading();
+    return;
+  }
+  if (read.cat === "taps") { renderTapList(); return; }
+  let html = "";
+  readData.cats.forEach(c => {
+    if (read.cat !== "all" && read.cat !== c.key) return;
+    const list = readData.articles.filter(a => a.cat === c.key);
+    html += `<div class="section-label">${esc(c.name)} · ${list.length}</div>` + list.map(a => {
+      const taps = Object.keys(readRec.taps).filter(k => k.startsWith(a.id + ":") && recOn("taps", k)).length;
+      return `<button type="button" class="art" data-art="${a.id}"><span class="art-en">${esc(a.title)}</span>
+        <span class="art-meta"><span>${fmtDate(a.date)}</span><span>${a.sents.length} 句</span>${taps?`<span>難句 ${taps}</span>`:""}${recOn("done", a.id)?`<span class="ok">✓ 讀完</span>`:""}</span></button>`;
+    }).join("");
+  });
+  $view.innerHTML = `<p class="read-tip" style="margin-top:12px">文章來自 VOA Learning English。讀的時候看不懂哪一句，點那一句就會出現中文。</p>` + html;
+}
+function renderTapList(){
+  const keys = tapKeys();
+  if (!keys.length){ $view.innerHTML = `<div class="empty">還沒有難句。<br>讀文章時點一下看不懂的句子，<br>它就會被記到這裡。</div>`; return; }
+  const groups = new Map();
+  keys.forEach(k => { const aid = k.split(":")[0]; if (!groups.has(aid)) groups.set(aid, []); groups.get(aid).push(k); });
+  let html = `<p class="read-tip" style="margin-top:12px">先自己讀一遍，想不起來再點句子看中文。真的懂了，就把星星點掉。</p>`;
+  for (const [aid, ks] of groups){
+    const a = readData.byId.get(aid);
+    html += `<button type="button" class="tap-art" data-art="${aid}">${esc(a.title)} ›</button>`;
+    ks.forEach(k => { const i = +k.split(":")[1], [en, zh] = a.sents[i]; html += `<div class="tap-row">${sentHTML(aid, i, en, zh)}</div>`; });
+  }
+  $view.innerHTML = html;
+}
+function renderArticle(){
+  const a = readData && readData.byId.get(read.art);
+  if (!a){ read.art = null; renderReadList(); return; }
+  const done = recOn("done", a.id);
+  let html = `<div class="reader">
+    <button type="button" class="link-btn back" id="read-back">‹ 文章列表</button>
+    <div class="art-cat">${esc(readData.catName[a.cat] || "")} · ${fmtDate(a.date)} · ${a.sents.length} 句</div>
+    <h2 class="art-title">${plainHTML(a.title, a.titleZh)}</h2>
+    ${a.audio ? `<audio controls preload="none" src="${esc(a.audio)}"></audio>` : ""}
+    <p class="read-tip">看不懂的句子點一下，下面就會出現中文，也會記到「我的難句」。</p>`;
+  a.paras.forEach(p => {
+    if (p.h) html += `<h3 class="art-h">${plainHTML(p.h, p.hz)}</h3>`;
+    else html += `<p class="para">${p.s.map((x, j) => sentHTML(a.id, p.i0 + j, x[0], x[1])).join(" ")}</p>`;
+  });
+  if (a.words && a.words.length){
+    html += `<div class="section-label">本文生字 · ${a.words.length}</div>` + a.words.map((w, j) => {
+      const on = hard.has(wordId(w.en));
+      return `<div class="rw" data-w="${j}"><div class="rw-main"><div class="en-line"><span class="en">${esc(w.en)}</span>${w.pos?`<span class="pos">${esc(w.pos)}</span>`:""}</div>
+        ${w.def?`<div class="def">${esc(w.def)}</div>`:""}<div class="zh" hidden>${esc(w.zh || "")}</div><div class="rw-hint">點一下看中文</div></div>
+        <div class="actions">${canSpeak?`<button type="button" class="icon-btn rw-speak" aria-label="念出 ${esc(w.en)}">${ICON_SPEAK}</button>`:""}
+        <button type="button" class="icon-btn star rw-star" aria-pressed="${on}" aria-label="加進複習">${ICON_STAR}</button></div></div>`;
+    }).join("") + `<p class="read-tip" style="margin-top:8px">點星星，這個字就會加進「查字」的查過的，也會出現在「複習」裡。</p>`;
+  }
+  html += `<button type="button" class="big-btn read-done${done?"":" know"}" id="read-done">${done ? "✓ 已經讀完（點一下取消）" : "讀完了"}</button>
+    <p class="src">文章來源：VOA Learning English（<a href="${esc(a.url)}" target="_blank" rel="noopener">看原文</a>）。中文為自行翻譯。</p></div>`;
+  $view.innerHTML = html;
+}
+function renderRead(){ read.art ? renderArticle() : renderReadList(); }
+function refreshReaderMarks(){
+  document.querySelectorAll(".sent[data-i]").forEach(el => el.classList.toggle("marked", recOn("taps", el.dataset.a + ":" + el.dataset.i)));
+  document.querySelectorAll(".sz-star").forEach(el => el.setAttribute("aria-pressed", recOn("taps", el.dataset.k)));
+}
+function openArticle(aid){
+  read.listY = window.scrollY; read.art = aid; read.open = new Set();
+  try { history.pushState({art:aid}, ""); } catch(e) {}
+  render(); window.scrollTo(0, 0);
+}
+function closeArticle(){
+  if (history.state && history.state.art) { history.back(); return; }   // 交給 popstate，手機返回鍵也走同一條路
+  read.art = null; read.open = new Set(); render(); window.scrollTo(0, read.listY);
+}
+window.addEventListener("popstate", () => {
+  if (state.mode === "read" && read.art && !(history.state && history.state.art)){
+    read.art = null; read.open = new Set(); render(); window.scrollTo(0, read.listY);
+  }
+});
+// 點一句：打開/收起中文；第一次打開就記成難句
+function toggleSent(el){
+  if (el.dataset.i === undefined){
+    const next = el.nextElementSibling;
+    if (next && next.classList.contains("sz")) { next.remove(); el.classList.remove("open"); }
+    else if (el.dataset.zh) { el.insertAdjacentHTML("afterend", szHTML(el.dataset.zh, el.dataset.say)); el.classList.add("open"); }
+    return;
+  }
+  const aid = el.dataset.a, i = +el.dataset.i, k = aid + ":" + i;
+  const a = readData.byId.get(aid); if (!a) return;
+  if (read.open.has(k)){
+    read.open.delete(k); el.classList.remove("open");
+    const next = el.nextElementSibling; if (next && next.classList.contains("sz")) next.remove();
+    return;
+  }
+  read.open.add(k); el.classList.add("open");
+  if (!recOn("taps", k)) { setRec("taps", k, true); el.classList.add("marked"); }
+  el.insertAdjacentHTML("afterend", szHTML(a.sents[i][1], a.sents[i][0], k));
+}
+// 生字表裡已經有的字就用那個，沒有就存成「查過的」
+function wordId(en){
+  const lower = en.toLowerCase(), b = ALL.find(x => x.en.toLowerCase() === lower);
+  return b ? b.id : "m:" + lower;
+}
+function toggleWordStar(a, w){
+  const id = wordId(w.en), on = !hard.has(id);
+  if (on){
+    if (byId.has(id)) addHistory(id);
+    else {
+      const L = lookups[id];
+      if (!L || L.del || L.ref){
+        const lower = w.en.toLowerCase();
+        const ex = (a.sents.find(s => s[0].toLowerCase().includes(lower)) || [""])[0];
+        addHistory(id, { en:w.en, pos:w.pos || "", zh:w.zh || "", def:w.def || "", ex, ipa:"" });
+      }
+    }
+  }
+  setHard(id, on);
+  return on;
+}
+function handleReadClick(e){
+  const t = e.target;
+  if (t.closest("#read-back")) { closeArticle(); return; }
+  if (t.closest("#read-retry")) { readErr = ""; renderReadList(); return; }
+  const art = t.closest("[data-art]"); if (art) { openArticle(art.dataset.art); return; }
+  const say = t.closest(".sz-speak"); if (say) { speak(say.dataset.say); return; }
+  const st = t.closest(".sz-star");
+  if (st){
+    const k = st.dataset.k, on = !recOn("taps", k);
+    setRec("taps", k, on);
+    st.setAttribute("aria-pressed", on);
+    const [aid, i] = k.split(":");
+    document.querySelectorAll(`.sent[data-a="${aid}"][data-i="${i}"]`).forEach(el => el.classList.toggle("marked", on));
+    return;
+  }
+  const s = t.closest(".sent"); if (s) { toggleSent(s); return; }
+  if (t.closest("#read-done")){
+    const a = readData.byId.get(read.art); if (!a) return;
+    const on = !recOn("done", a.id); setRec("done", a.id, on);
+    const b = t.closest("#read-done");
+    b.classList.toggle("know", !on); b.textContent = on ? "✓ 已經讀完（點一下取消）" : "讀完了";
+    return;
+  }
+  const rw = t.closest(".rw");
+  if (rw){
+    const a = readData.byId.get(read.art), w = a && a.words[+rw.dataset.w]; if (!w) return;
+    if (t.closest(".rw-speak")) { speak(w.en); return; }
+    if (t.closest(".rw-star")) { const on = toggleWordStar(a, w); rw.querySelector(".rw-star").setAttribute("aria-pressed", on); return; }
+    const z = rw.querySelector(".zh"), hint = rw.querySelector(".rw-hint");
+    z.hidden = !z.hidden; hint.hidden = !z.hidden;
+  }
+}
+
 // ---------- render ----------
 function render(){
   document.querySelectorAll(".modes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === state.mode));
   const isLookup = state.mode === "lookup";
+  if (state.mode === "read"){
+    $searchRow.hidden = true;
+    renderChips(); renderStats(); renderRead();
+    return;
+  }
   $searchRow.hidden = !(state.mode === "words" || state.mode === "phrases" || isLookup);
   $hardOnly.hidden = isLookup;
   $lookupGo.hidden = !isLookup;
@@ -1414,6 +1684,7 @@ document.querySelector(".modes").addEventListener("click", e => {
 });
 $chips.addEventListener("click", e => {
   const b = e.target.closest(".chip"); if (!b || b.disabled) return;
+  if (b.dataset.rcat){ read.cat = b.dataset.rcat; read.open = new Set(); renderReadChips(); renderReadList(); window.scrollTo(0,0); return; }
   if (b.dataset.level){ state.level = b.dataset.level === "all" ? "all" : +b.dataset.level; state.cat = "all"; }
   if (b.dataset.cat){ state.cat = b.dataset.cat; }
   renderChips(); renderList(); window.scrollTo(0,0);
@@ -1440,6 +1711,7 @@ function flipCard(){
 function currentCardId(){ return state.mode === "today" ? plan.ids[plan.i] : review.deck[review.i]; }
 
 $view.addEventListener("click", e => {
+  if (state.mode === "read") { handleReadClick(e); return; }
   const dict = e.target.closest(".dict-btn");
   if (dict){ const w = dict.dataset.dict; state.mode = "lookup"; state.q = w; $q.value = w; render(); doLookup(w); window.scrollTo(0,0); return; }
   const entry = e.target.closest(".entry");
@@ -1485,6 +1757,7 @@ $view.addEventListener("change", e => {
 });
 $view.addEventListener("keydown", e => {
   if (e.target.id === "card" && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); flipCard(); document.getElementById("card")?.focus(); }
+  if (e.target.classList.contains("sent") && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggleSent(e.target); }
 });
 // 回到頁面時：過了半夜換成新的一天；有開同步就抓一次最新的
 document.addEventListener("visibilitychange", () => {
