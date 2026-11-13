@@ -1523,7 +1523,7 @@ function renderReadList(){
 }
 function renderTapList(){
   const keys = tapKeys();
-  if (!keys.length){ $view.innerHTML = `<div class="empty">還沒有難句。<br>讀文章時點一下看不懂的句子，<br>它就會被記到這裡。</div>`; return; }
+  if (!keys.length){ $view.innerHTML = `<div class="empty">還沒有難句。<br>讀文章時點句子看中文，<br>再點中文旁邊的星星，就會記到這裡。</div>`; return; }
   const groups = new Map();
   keys.forEach(k => { const aid = k.split(":")[0]; if (!groups.has(aid)) groups.set(aid, []); groups.get(aid).push(k); });
   let html = `<p class="read-tip" style="margin-top:12px">先自己讀一遍，想不起來再點句子看中文。真的懂了，就把星星點掉。</p>`;
@@ -1543,7 +1543,7 @@ function renderArticle(){
     <div class="art-cat">${esc(readData.catName[a.cat] || "")} · ${fmtDate(a.date)} · ${a.sents.length} 句</div>
     <h2 class="art-title">${plainHTML(a.title, a.titleZh)}</h2>
     ${a.audio ? `<audio controls preload="none" src="${esc(a.audio)}"></audio>` : ""}
-    <p class="read-tip">看不懂的句子點一下，下面就會出現中文，也會記到「我的難句」。</p>`;
+    <p class="read-tip">看不懂的句子點一下，下面就會出現中文。覺得難，就點中文旁邊的星星，記到「我的難句」。</p>`;
   a.paras.forEach(p => {
     if (p.h) html += `<h3 class="art-h">${plainHTML(p.h, p.hz)}</h3>`;
     else html += `<p class="para">${p.s.map((x, j) => sentHTML(a.id, p.i0 + j, x[0], x[1])).join(" ")}</p>`;
@@ -1580,7 +1580,7 @@ window.addEventListener("popstate", () => {
     read.art = null; read.open = new Set(); render(); window.scrollTo(0, read.listY);
   }
 });
-// 點一句：打開/收起中文；第一次打開就記成難句
+// 點一句：打開/收起中文（不會自動標星星，要自己點星星才算難句）
 function toggleSent(el){
   if (el.dataset.i === undefined){
     const next = el.nextElementSibling;
@@ -1596,7 +1596,6 @@ function toggleSent(el){
     return;
   }
   read.open.add(k); el.classList.add("open");
-  if (!recOn("taps", k)) { setRec("taps", k, true); el.classList.add("marked"); }
   el.insertAdjacentHTML("afterend", szHTML(a.sents[i][1], a.sents[i][0], k));
 }
 // 生字表裡已經有的字就用那個，沒有就存成「查過的」
