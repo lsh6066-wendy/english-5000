@@ -1459,7 +1459,7 @@ function loadReading(){
     .catch(() => { readErr = location.protocol === "file:"
         ? "直接打開電腦裡的檔案時讀不到文章。請從網站網址打開。"
         : "文章載入失敗。確認有網路，再試一次。"; })
-    .finally(() => { readLoading = false; if (state.mode === "read") render(); });
+    .finally(() => { readLoading = false; if (state.mode === "read") { render(); applyPendingScroll(); } });
 }
 const recOn = (g, k) => !!(readRec[g][k] && readRec[g][k][0]);
 function setRec(g, k, on){ readRec[g][k] = [on ? 1 : 0, Date.now()]; store(KEY_READ, readRec); queueSync(); renderStats(); }
@@ -1561,7 +1561,7 @@ function renderArticle(){
     <p class="src">文章來源：VOA Learning English（<a href="${esc(a.url)}" target="_blank" rel="noopener">看原文</a>）。中文為自行翻譯。</p></div>`;
   $view.innerHTML = html;
 }
-function renderRead(){ read.art ? renderArticle() : renderReadList(); }
+function renderRead(){ read.art && readData ? renderArticle() : renderReadList(); }   // 文章還沒載好先顯示「載入中」，載好再進文章
 function refreshReaderMarks(){
   document.querySelectorAll(".sent[data-i]").forEach(el => el.classList.toggle("marked", recOn("taps", el.dataset.a + ":" + el.dataset.i)));
   document.querySelectorAll(".sz-star").forEach(el => el.setAttribute("aria-pressed", recOn("taps", el.dataset.k)));
@@ -1658,7 +1658,7 @@ function render(){
   const isLookup = state.mode === "lookup";
   if (state.mode === "read"){
     $searchRow.hidden = true;
-    renderChips(); renderStats(); renderRead();
+    renderChips(); renderStats(); renderRead(); savePlace();
     return;
   }
   $searchRow.hidden = !(state.mode === "words" || state.mode === "phrases" || isLookup);
@@ -1672,6 +1672,7 @@ function render(){
   else if (state.mode === "review") renderReview();
   else if (isLookup) renderLookup();
   else renderList();
+  savePlace();
 }
 
 // ---------- events ----------
@@ -1683,10 +1684,10 @@ document.querySelector(".modes").addEventListener("click", e => {
 });
 $chips.addEventListener("click", e => {
   const b = e.target.closest(".chip"); if (!b || b.disabled) return;
-  if (b.dataset.rcat){ read.cat = b.dataset.rcat; read.open = new Set(); renderReadChips(); renderReadList(); window.scrollTo(0,0); return; }
+  if (b.dataset.rcat){ read.cat = b.dataset.rcat; read.open = new Set(); renderReadChips(); renderReadList(); window.scrollTo(0,0); savePlace(); return; }
   if (b.dataset.level){ state.level = b.dataset.level === "all" ? "all" : +b.dataset.level; state.cat = "all"; }
   if (b.dataset.cat){ state.cat = b.dataset.cat; }
-  renderChips(); renderList(); window.scrollTo(0,0);
+  renderChips(); renderList(); window.scrollTo(0,0); savePlace();
 });
 $q.addEventListener("input", () => {
   state.q = $q.value;
@@ -1766,7 +1767,45 @@ document.addEventListener("visibilitychange", () => {
 });
 window.addEventListener("online", () => { if (syncCfg) syncNow(); });
 
+// ---------- 記住上次的位置（每台裝置各記各的，不同步） ----------
+// {mode, level, cat, rcat, art, y, listY, rv:{src,deck,i}}：模式、分類、正在讀的文章、捲到哪
+const KEY_PLACE = "everyday-english:place";
+let pendingY = null;          // 還沒捲回去之前不要存（不然 0 會蓋掉舊位置）
+function savePlace(){
+  if (pendingY !== null) return;
+  store(KEY_PLACE, { mode:state.mode, level:state.level, cat:state.cat, rcat:read.cat,
+    art:state.mode === "read" ? read.art : null, y:Math.round(window.scrollY), listY:read.listY,
+    rv: review.src ? { src:review.src, deck:review.deck, i:review.i } : null });
+}
+function applyPendingScroll(){
+  if (pendingY === null) return;
+  if (state.mode === "read" && !readData && !readErr) return;   // 文章還在載，載好再捲
+  const y = pendingY; pendingY = null;
+  window.scrollTo(0, y); savePlace();
+}
+let placeTimer = 0;
+window.addEventListener("scroll", () => { clearTimeout(placeTimer); placeTimer = setTimeout(savePlace, 300); }, { passive:true });
+window.addEventListener("pagehide", savePlace);
+document.addEventListener("visibilitychange", () => { if (document.hidden) savePlace(); });
+(function restorePlace(){
+  const p = load(KEY_PLACE, null);
+  if (!p || !document.querySelector(`.modes button[data-mode="${p.mode}"]`)) return;
+  try { history.scrollRestoration = "manual"; } catch(e) {}
+  state.mode = p.mode;
+  if (p.level === "all" || typeof p.level === "number") state.level = p.level;
+  if (typeof p.cat === "string") state.cat = p.cat;
+  if (typeof p.rcat === "string") read.cat = p.rcat;
+  if (typeof p.listY === "number") read.listY = p.listY;
+  if (p.rv && Array.isArray(p.rv.deck)) { review.src = p.rv.src; review.deck = p.rv.deck; review.i = +p.rv.i || 0; }
+  if (p.mode === "read" && p.art){
+    read.art = p.art;
+    try { history.replaceState(null, ""); history.pushState({art:p.art}, ""); } catch(e) {}   // 按返回鍵先回文章列表
+  }
+  pendingY = +p.y || 0;
+})();
+
 render();
+applyPendingScroll();
 showSync(syncCfg ? (syncCfg.last ? "ok" : "busy") : "off");
 if (syncCfg) syncNow();
 </script>
