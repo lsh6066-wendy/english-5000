@@ -936,6 +936,9 @@ function historyItems(){ return historyIds().map(id => getItem(lookups[id].ref |
 // ---------- state ----------
 const state = { mode:"today", level:"all", cat:"all", q:"", hardOnly:false };
 const review = { src:null, deck:[], i:0, flipped:false };
+// 每個分頁各自記住：捲到哪、分類、等級。切走時存，切回來時拿出來
+const modeMem = {};   // {today:{y}, words:{y,cat,level}, read:{y}, ...}
+function rememberMode(){ modeMem[state.mode] = { y:Math.round(window.scrollY), cat:state.cat, level:state.level }; }
 let todayFlipped = false;
 let lookupUI = { status:"", id:null, word:"" };   // status: "", "loading", "done", "error"
 
@@ -1284,7 +1287,7 @@ function nextCard(markHard){
   renderReview();
 }
 function goReviewHard(){
-  state.mode = "review";
+  rememberMode(); state.mode = "review";
   review.src = "hard"; review.deck = shuffle(poolFor("hard").map(x => x.id)); review.i = 0; review.flipped = false;
   render(); window.scrollTo(0,0);
 }
@@ -1536,7 +1539,7 @@ function renderTapList(){
 }
 function renderArticle(){
   const a = readData && readData.byId.get(read.art);
-  if (!a){ read.art = null; renderReadList(); return; }
+  if (!a){ read.art = null; try { if (history.state && history.state.art) history.replaceState(null, ""); } catch(e) {} renderReadList(); return; }
   const done = recOn("done", a.id);
   let html = `<div class="reader">
     <button type="button" class="link-btn back" id="read-back">‹ 文章列表</button>
@@ -1678,9 +1681,20 @@ function render(){
 // ---------- events ----------
 document.querySelector(".modes").addEventListener("click", e => {
   const b = e.target.closest("button[data-mode]"); if (!b) return;
-  if (state.mode !== b.dataset.mode){ state.mode = b.dataset.mode; state.cat = "all"; }
-  render(); window.scrollTo(0,0);
-  if (state.mode === "lookup") $q.focus();
+  let y = 0;                                   // 再點一次同一個分頁＝回最上面
+  if (state.mode !== b.dataset.mode){         // 換分頁：記住舊的，拿出新的上次停在哪
+    rememberMode();
+    state.mode = b.dataset.mode;
+    const m = modeMem[state.mode];
+    state.cat = m ? m.cat : "all";
+    if (m) { state.level = m.level; y = m.y; }
+  }
+  render();
+  if (state.mode === "read" && read.art && !(history.state && history.state.art)) { try { history.pushState({art:read.art}, ""); } catch(e) {} }   // 返回鍵先回文章列表
+  if (state.mode === "read" && !readData && y) pendingY = y;          // 文章還在載，載好再捲
+  window.scrollTo(0, y);
+  savePlace();
+  if (state.mode === "lookup") $q.focus({ preventScroll:true });
 });
 $chips.addEventListener("click", e => {
   const b = e.target.closest(".chip"); if (!b || b.disabled) return;
@@ -1698,7 +1712,7 @@ $q.addEventListener("keydown", e => {
   if (e.key !== "Enter" || e.isComposing) return;
   if (state.mode !== "lookup" && !looksEnglish($q.value)) return;
   e.preventDefault();
-  if (state.mode !== "lookup"){ state.mode = "lookup"; render(); }
+  if (state.mode !== "lookup"){ rememberMode(); state.mode = "lookup"; render(); }
   doLookup($q.value); $q.blur();
 });
 $lookupGo.addEventListener("click", () => { doLookup($q.value); $q.blur(); });
@@ -1713,7 +1727,7 @@ function currentCardId(){ return state.mode === "today" ? plan.ids[plan.i] : rev
 $view.addEventListener("click", e => {
   if (state.mode === "read") { handleReadClick(e); return; }
   const dict = e.target.closest(".dict-btn");
-  if (dict){ const w = dict.dataset.dict; state.mode = "lookup"; state.q = w; $q.value = w; render(); doLookup(w); window.scrollTo(0,0); return; }
+  if (dict){ const w = dict.dataset.dict; rememberMode(); state.mode = "lookup"; state.q = w; $q.value = w; render(); doLookup(w); window.scrollTo(0,0); return; }
   const entry = e.target.closest(".entry");
   if (entry){
     const x = getItem(entry.dataset.id); if (!x) return;
@@ -1768,13 +1782,13 @@ document.addEventListener("visibilitychange", () => {
 window.addEventListener("online", () => { if (syncCfg) syncNow(); });
 
 // ---------- 記住上次的位置（每台裝置各記各的，不同步） ----------
-// {mode, level, cat, rcat, art, y, listY, rv:{src,deck,i}}：模式、分類、正在讀的文章、捲到哪
+// {mode, level, cat, rcat, art, y, listY, mm, rv:{src,deck,i}}：模式、分類、正在讀的文章、捲到哪（mm＝其他分頁各自停在哪）
 const KEY_PLACE = "everyday-english:place";
 let pendingY = null;          // 還沒捲回去之前不要存（不然 0 會蓋掉舊位置）
 function savePlace(){
   if (pendingY !== null) return;
   store(KEY_PLACE, { mode:state.mode, level:state.level, cat:state.cat, rcat:read.cat,
-    art:state.mode === "read" ? read.art : null, y:Math.round(window.scrollY), listY:read.listY,
+    art:read.art, y:Math.round(window.scrollY), listY:read.listY, mm:modeMem,
     rv: review.src ? { src:review.src, deck:review.deck, i:review.i } : null });
 }
 function applyPendingScroll(){
@@ -1797,8 +1811,13 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) saveP
   if (typeof p.rcat === "string") read.cat = p.rcat;
   if (typeof p.listY === "number") read.listY = p.listY;
   if (p.rv && Array.isArray(p.rv.deck)) { review.src = p.rv.src; review.deck = p.rv.deck; review.i = +p.rv.i || 0; }
-  if (p.mode === "read" && p.art){
-    read.art = p.art;
+  if (p.mm && typeof p.mm === "object") Object.keys(p.mm).forEach(k => {
+    const m = p.mm[k];
+    if (m && typeof m.y === "number" && k !== p.mode) modeMem[k] = { y:m.y, cat:typeof m.cat === "string" ? m.cat : "all", level:(m.level === "all" || typeof m.level === "number") ? m.level : "all" };
+  });
+  if (typeof p.ry === "number" && !modeMem.read && p.mode !== "read") modeMem.read = { y:p.ry, cat:"all", level:state.level };   // 舊版存法
+  if (typeof p.art === "string") read.art = p.art;
+  if (p.mode === "read" && read.art){
     try { history.replaceState(null, ""); history.pushState({art:p.art}, ""); } catch(e) {}   // 按返回鍵先回文章列表
   }
   pendingY = +p.y || 0;
